@@ -90,6 +90,9 @@ const GET_CHANGELOG_BY_ID = `
       data {
         id
         attributes {
+          AppVersion
+          ReleaseDate
+          Changes
           localizations(pagination: { pageSize: 1000 }) {
             data {
               id
@@ -201,7 +204,6 @@ export const useStrapi = () => {
   } as const
 
   const graphqlFetch = async <T = any>(query: string, variables: Record<string, any> = {}): Promise<T> => {
-    // SECURE: Now calling local Nitro proxy instead of direct Strapi
     const response = await $fetch<{ data: T, errors?: any[] }>('/api/strapi', {
       method: 'POST',
       body: {
@@ -304,65 +306,79 @@ export const useStrapi = () => {
 
     // Cache for category lookups to optimize FAQ sync
     const categoryCache: Record<string, string> = {}
+    
+    // Concurrency limit for batch processing
+    const CONCURRENCY_LIMIT = 5
+    const chunks: StrapiEntry[][] = []
+    for (let i = 0; i < translatedEntries.length; i += CONCURRENCY_LIMIT) {
+      chunks.push(translatedEntries.slice(i, i + CONCURRENCY_LIMIT))
+    }
 
-    for (const entry of translatedEntries) {
-      try {
-        // 1. Fetch source entry by ID with localizations
-        const sourceData = await graphqlFetch(qConfig.byId, { id: entry.id })
-        const sourceItem = sourceData[qConfig.singleKey].data
-        
-        if (!sourceItem) {
-          throw new Error(`Source entry ID ${entry.id} not found`)
-        }
-
-        const localizations = sourceItem.attributes?.localizations?.data || []
-        const existingLoc = localizations.find((loc: any) => loc.attributes?.locale === locale)
-
-        // 2. Prepare data object for mutation
-        const mutationData: any = { publishedAt: new Date().toISOString() }
-        
-        if (type === 'categories') {
-          mutationData.Name = (entry as CategoryEntry).category
-        } else if (type === 'changelogs') {
-          mutationData.AppVersion = (entry as ChangelogEntry).appVersion
-          mutationData.Changes = (entry as ChangelogEntry).changes
-          mutationData.ReleaseDate = (entry as ChangelogEntry).releaseDate
-        } else if (type === 'faqs') {
-          const faq = entry as FaqEntry
-          mutationData.Title = faq.title
-          mutationData.Content = faq.content
+    for (const chunk of chunks) {
+      await Promise.all(chunk.map(async (entry) => {
+        try {
+          // 1. Fetch source entry by ID with localizations
+          const sourceData = await graphqlFetch(qConfig.byId, { id: entry.id })
+          const sourceItem = sourceData[qConfig.singleKey]?.data
           
-          // Map source category ID to localized category ID if available
-          if (faq.category) {
-            if (!categoryCache[faq.category]) {
-              const catData = await graphqlFetch(queryMap.categories.byId, { id: faq.category })
-              const catLocs = catData.igloohomeFaqCategory?.data?.attributes?.localizations?.data || []
-              const catLoc = catLocs.find((loc: any) => loc.attributes?.locale === locale)
-              categoryCache[faq.category] = catLoc ? catLoc.id : faq.category
-            }
-            mutationData.Category = categoryCache[faq.category]
+          if (!sourceItem) {
+            throw new Error(`Source entry ID ${entry.id} not found in Strapi`)
           }
-        }
 
-        // 3. Update existing localization or create new one
-        if (existingLoc) {
-          await graphqlFetch(qConfig.update, {
-            id: existingLoc.id,
-            data: mutationData
-          })
-        } else {
-          await graphqlFetch(qConfig.submit, {
-            id: entry.id,
-            locale,
-            data: mutationData
-          })
+          const localizations = sourceItem.attributes?.localizations?.data || []
+          const existingLoc = localizations.find((loc: any) => loc.attributes?.locale === locale)
+
+          // 2. Prepare data object for mutation
+          // IMPORTANT: Use the same case as defined in schema.graphql
+          const mutationData: any = { publishedAt: new Date().toISOString() }
+          
+          if (type === 'categories') {
+            mutationData.Name = (entry as CategoryEntry).category
+          } else if (type === 'changelogs') {
+            const changelog = entry as ChangelogEntry
+            mutationData.AppVersion = changelog.appVersion
+            mutationData.Changes = changelog.changes
+            // Ensure ReleaseDate is valid or null
+            mutationData.ReleaseDate = changelog.releaseDate || null
+          } else if (type === 'faqs') {
+            const faq = entry as FaqEntry
+            mutationData.Title = faq.title
+            mutationData.Content = faq.content
+            
+            // Map source category ID to localized category ID if available
+            if (faq.category) {
+              if (!categoryCache[faq.category]) {
+                const catData = await graphqlFetch(queryMap.categories.byId, { id: faq.category })
+                const catLocs = catData.igloohomeFaqCategory?.data?.attributes?.localizations?.data || []
+                const catLoc = catLocs.find((loc: any) => loc.attributes?.locale === locale)
+                categoryCache[faq.category] = catLoc ? catLoc.id : faq.category
+              }
+              mutationData.Category = categoryCache[faq.category]
+            }
+          }
+
+          // 3. Update existing localization or create new one
+          if (existingLoc) {
+            await graphqlFetch(qConfig.update, {
+              id: existingLoc.id,
+              data: mutationData
+            })
+          } else {
+            await graphqlFetch(qConfig.submit, {
+              id: entry.id,
+              locale,
+              data: mutationData
+            })
+          }
+          
+          synced++
+        } catch (e: any) {
+          failed++
+          const msg = `Failed to sync ID ${entry.id}: ${e.message}`
+          console.error(msg)
+          errors.push(msg)
         }
-        
-        synced++
-      } catch (e: any) {
-        failed++
-        errors.push(`Failed to sync ID ${entry.id}: ${e.message}`)
-      }
+      }))
     }
 
     return { synced, failed, errors }

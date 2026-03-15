@@ -1,41 +1,48 @@
-import { SUPPORTED_LOCALES } from '~/types/translations'
-import type { ContentType, LocaleCode } from '~/types/translations'
+import { SUPPORTED_LOCALES } from "~/types/translations";
+import type { ContentType, LocaleCode } from "~/types/translations";
 
 export const useGemini = () => {
-  const localeMap: Record<string, string> = SUPPORTED_LOCALES.reduce((acc: Record<string, string>, l: any) => {
-    acc[l.code] = l.name
-    return acc
-  }, {})
+  const localeMap: Record<string, string> = SUPPORTED_LOCALES.reduce(
+    (acc: Record<string, string>, l: any) => {
+      acc[l.code] = l.name;
+      return acc;
+    },
+    {},
+  );
 
   const translateStrings = async (
     values: string[],
     targetLocale: string,
     contentType: ContentType,
-    onProgress?: (done: number, total: number) => void
+    onProgress?: (done: number, total: number) => void,
   ): Promise<string[]> => {
-    const BATCH_SIZE = 200
-    const results: string[] = []
-    
+    const BATCH_SIZE = 200;
+    const results: string[] = [];
+
     for (let i = 0; i < values.length; i += BATCH_SIZE) {
-      const batch = values.slice(i, i + BATCH_SIZE)
-      const translatedBatch = await translateBatchWithRetry(batch, targetLocale, contentType)
-      results.push(...translatedBatch)
-      
+      const batch = values.slice(i, i + BATCH_SIZE);
+      const translatedBatch = await translateBatchWithRetry(
+        batch,
+        targetLocale,
+        contentType,
+      );
+      results.push(...translatedBatch);
+
       if (onProgress) {
-        onProgress(results.length, values.length)
+        onProgress(results.length, values.length);
       }
     }
-    
-    return results
-  }
+
+    return results;
+  };
 
   const translateBatchWithRetry = async (
     batch: string[],
     targetLocale: string,
     contentType: ContentType,
-    isRetry = false
+    isRetry = false,
   ): Promise<string[]> => {
-    const languageName = localeMap[targetLocale] || targetLocale
+    const languageName = localeMap[targetLocale] || targetLocale;
     const prompt = `
 You are a professional software localisation translator.
 Translate the following JSON array of strings from English to ${languageName} (${targetLocale}).
@@ -54,68 +61,91 @@ Rules:
 
 Input JSON array:
 ${JSON.stringify(batch)}
-`.trim()
+`.trim();
 
     try {
       // SECURE: Now calling local Nitro proxy instead of direct Gemini SDK in browser
-      const response = await $fetch<any>('/api/gemini', {
-        method: 'POST',
+      const response = await $fetch<any>("/api/gemini", {
+        method: "POST",
         body: {
-          model: 'gemini-1.5-flash',
-          contents: [{ parts: [{ text: isRetry ? `IMPORTANT: Your previous response was invalid. Return ONLY a JSON array of strings with exactly ${batch.length} elements, nothing else.\n\n${prompt}` : prompt }] }]
-        }
-      })
+          model: "gemini-2.5-flash",
+          contents: [
+            {
+              parts: [
+                {
+                  text: isRetry
+                    ? `IMPORTANT: Your previous response was invalid. Return ONLY a JSON array of strings with exactly ${batch.length} elements, nothing else.\n\n${prompt}`
+                    : prompt,
+                },
+              ],
+            },
+          ],
+        },
+      });
 
-      const text = response.candidates?.[0]?.content?.parts?.[0]?.text
-      if (!text) throw new Error('Empty response from Gemini proxy')
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error("Empty response from Gemini proxy");
 
       // Clean markdown if present
-      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim()
-      const parsed = JSON.parse(cleanJson)
+      const cleanJson = text
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+      const parsed = JSON.parse(cleanJson);
 
       if (!Array.isArray(parsed) || parsed.length !== batch.length) {
-        throw new Error(`Length mismatch: expected ${batch.length}, got ${parsed?.length}`)
+        throw new Error(
+          `Length mismatch: expected ${batch.length}, got ${parsed?.length}`,
+        );
       }
 
-      return parsed as string[]
+      return parsed as string[];
     } catch (error: any) {
-      console.error('[Gemini Proxy Error]:', error)
+      console.error("[Gemini Proxy Error]:", error);
 
       if (!isRetry) {
-        console.warn('Translation failed, retrying once...')
-        return translateBatchWithRetry(batch, targetLocale, contentType, true)
+        console.warn("Translation failed, retrying once...");
+        return translateBatchWithRetry(batch, targetLocale, contentType, true);
       }
-      
-      throw new Error(`Gemini Proxy Error: ${error.message || 'Unknown error'}`)
+
+      throw new Error(
+        `Gemini Proxy Error: ${error.message || "Unknown error"}`,
+      );
     }
-  }
+  };
 
   const translateAllLocales = async (
     values: string[],
     targetLocales: string[],
     contentType: ContentType,
-    onLocaleProgress?: (locale: string, status: 'running' | 'done' | 'error', data?: string[], error?: string) => void
+    onLocaleProgress?: (
+      locale: string,
+      status: "running" | "done" | "error",
+      data?: string[],
+      error?: string,
+    ) => void,
   ): Promise<Record<string, string[]>> => {
-    const results: Record<string, string[]> = {}
+    const results: Record<string, string[]> = {};
 
     for (const locale of targetLocales) {
       try {
-        if (onLocaleProgress) onLocaleProgress(locale, 'running')
-        
-        const translated = await translateStrings(values, locale, contentType)
-        results[locale] = translated
-        
-        if (onLocaleProgress) onLocaleProgress(locale, 'done', translated)
+        if (onLocaleProgress) onLocaleProgress(locale, "running");
+
+        const translated = await translateStrings(values, locale, contentType);
+        results[locale] = translated;
+
+        if (onLocaleProgress) onLocaleProgress(locale, "done", translated);
       } catch (error: any) {
-        if (onLocaleProgress) onLocaleProgress(locale, 'error', undefined, error.message)
+        if (onLocaleProgress)
+          onLocaleProgress(locale, "error", undefined, error.message);
       }
     }
 
-    return results
-  }
+    return results;
+  };
 
   return {
     translateStrings,
-    translateAllLocales
-  }
-}
+    translateAllLocales,
+  };
+};

@@ -162,55 +162,69 @@ watch(() => props.show, (newVal) => {
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-8 sm:scale-95"
+      enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0 sm:scale-100"
+      leave-to-class="opacity-0 translate-y-8 sm:scale-95"
     >
       <div
         v-if="show"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        @click.self="$emit('close')"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-indigo-950/40 backdrop-blur-md" @click="$emit('close')"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[95vh] border border-gray-100">
           <!-- Header -->
-          <div class="p-6 border-b shrink-0 flex justify-between items-center bg-gray-50/50">
+          <div class="p-6 sm:p-8 border-b shrink-0 flex justify-between items-center bg-gray-50/50">
             <div>
-              <h3 class="text-xl font-bold text-gray-900 uppercase tracking-tight">Manual Upload: {{ type }}</h3>
-              <p class="text-xs text-gray-500 font-medium">Upload JSON files with translated content</p>
+              <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 tracking-tight uppercase">Manual Data Import</h3>
+              </div>
+              <p class="mt-1 text-xs text-gray-400 font-bold uppercase tracking-widest">Type: {{ type }}</p>
             </div>
-            <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <button @click="$emit('close')" class="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
 
-          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          <div class="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 scrollbar-thin">
             <!-- Format Guide -->
-            <div v-if="stagedFiles.length === 0" class="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-              <div class="flex items-center gap-2 mb-3 text-blue-800 font-bold text-xs uppercase tracking-widest">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                Required JSON Structure
+            <div v-if="stagedFiles.length === 0" class="space-y-4">
+              <div class="flex items-center gap-2 text-indigo-800 font-black text-[10px] uppercase tracking-[0.2em]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Template Reference
               </div>
-              <pre class="text-[10px] bg-white/80 p-3 rounded-lg border border-blue-100 overflow-x-auto text-blue-900 font-mono shadow-sm">{{ JSON.stringify(exampleFormat, null, 2) }}</pre>
+              <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                <pre class="relative text-[10px] bg-indigo-900 p-6 rounded-2xl overflow-x-auto text-indigo-100 font-mono shadow-xl">{{ JSON.stringify(exampleFormat, null, 2) }}</pre>
+              </div>
             </div>
 
             <!-- Upload Zone -->
             <label
               v-if="stagedFiles.length === 0"
-              class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-blue-400 transition-all group"
+              class="flex flex-col items-center justify-center w-full h-72 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer bg-gray-50/50 hover:bg-indigo-50/30 hover:border-indigo-200 transition-all group relative overflow-hidden"
             >
-              <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                <div class="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                  <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              <!-- Hover Effect BG -->
+              <div class="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              
+              <div class="relative flex flex-col items-center justify-center pt-5 pb-6">
+                <div class="bg-white p-5 rounded-3xl shadow-xl shadow-indigo-100 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                   </svg>
                 </div>
-                <p class="mb-2 text-sm text-gray-700">
-                  <span class="font-bold">Click to select files</span> or drag and drop
+                <p class="mb-2 text-base font-black text-gray-900 tracking-tight">
+                  Drag & Drop JSON files
                 </p>
-                <p class="text-xs text-gray-400 uppercase font-bold tracking-tighter">JSON format only • Multiple files supported</p>
+                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Multiple files supported • Auto-locale detection</p>
               </div>
               <input
                 ref="fileInput"
@@ -223,104 +237,120 @@ watch(() => props.show, (newVal) => {
             </label>
 
             <!-- Staged Files List -->
-            <div v-else class="space-y-3">
-              <div class="flex justify-between items-center mb-2">
-                <h4 class="text-xs font-black uppercase tracking-widest text-gray-400">Staged Files ({{ stagedFiles.length }})</h4>
-                <button @click="reset" class="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest">Clear All</button>
+            <div v-else class="space-y-4">
+              <div class="flex justify-between items-center mb-4">
+                <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Staged for Import ({{ stagedFiles.length }})</h4>
+                <button @click="reset" class="text-[10px] font-black text-rose-500 hover:text-rose-700 uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-rose-50 transition-colors">Clear All</button>
               </div>
               
-              <div v-for="file in stagedFiles" :key="file.id" class="p-4 border rounded-xl bg-white shadow-sm flex flex-col gap-3 transition-all hover:border-blue-200">
-                <div class="flex justify-between items-start">
-                  <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="bg-gray-100 p-2 rounded-lg text-gray-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div v-for="file in stagedFiles" :key="file.id" class="group p-5 bg-white border border-gray-100 rounded-2xl shadow-sm transition-all hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100">
+                <div class="flex justify-between items-start mb-6">
+                  <div class="flex items-center gap-4 overflow-hidden">
+                    <div class="bg-gray-100 p-3 rounded-xl text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                     </div>
                     <div class="overflow-hidden">
-                      <p class="text-sm font-bold text-gray-900 truncate">{{ file.filename }}</p>
-                      <p class="text-[10px] font-medium text-gray-500">{{ file.entries.length }} valid keys identified</p>
+                      <p class="text-sm font-black text-gray-900 truncate">{{ file.filename }}</p>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{{ file.entries.length }} records identified</p>
                     </div>
                   </div>
-                  <button @click="removeFile(file.id)" class="text-gray-300 hover:text-red-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  <button @click="removeFile(file.id)" class="p-2 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <!-- Searchable Dropdown -->
-                  <div class="flex-1 w-full relative">
-                    <label class="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-widest">Assign Locale</label>
+                  <div class="relative">
+                    <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest ml-1">Assign Target Language</label>
                     <div class="relative">
                       <button 
                         @click="file.isDropdownOpen = !file.isDropdownOpen"
-                        class="w-full p-2.5 border rounded-lg text-left text-sm font-bold transition-all flex justify-between items-center"
-                        :class="[file.detectedLocale ? 'border-green-200 bg-green-50 text-green-800' : 'border-gray-200 bg-white text-gray-400 hover:border-blue-400']"
+                        class="w-full px-4 py-3 border-2 rounded-xl text-left text-sm font-black transition-all flex justify-between items-center"
+                        :class="[file.detectedLocale ? 'border-indigo-100 bg-indigo-50/30 text-indigo-700' : 'border-gray-100 bg-white text-gray-400 hover:border-indigo-200']"
                       >
-                        {{ file.detectedLocale ? `${locales.find(l => l.code === file.detectedLocale)?.name} (${file.detectedLocale.toUpperCase()})` : 'Select target locale...' }}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{'rotate-180': file.isDropdownOpen}" class="transition-transform"><polyline points="6 9 12 15 18 9"/></svg>
+                        <span v-if="file.detectedLocale" class="flex items-center gap-2">
+                          {{ locales.find(l => l.code === file.detectedLocale)?.name }}
+                          <span class="text-[10px] font-bold opacity-40">({{ file.detectedLocale.toUpperCase() }})</span>
+                        </span>
+                        <span v-else>Select language...</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :class="{'rotate-180': file.isDropdownOpen}" class="transition-transform"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
 
                       <!-- Dropdown Menu -->
-                      <div v-if="file.isDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                        <div class="p-2 border-b bg-gray-50">
-                          <input 
-                            v-model="file.searchQuery"
-                            type="text"
-                            placeholder="Search language or code..."
-                            class="w-full p-2 bg-white border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                            @click.stop
-                            autoFocus
-                          />
-                        </div>
-                        <div class="max-h-48 overflow-y-auto">
-                          <button 
-                            v-for="l in getFilteredLocales(file.searchQuery)" 
-                            :key="l.code"
-                            @click="selectLocale(file.id, l.code)"
-                            class="w-full text-left p-2.5 text-xs font-bold hover:bg-blue-50 transition-colors flex items-center justify-between"
-                          >
-                            <span>{{ l.name }}</span>
-                            <span class="text-gray-400 font-mono">{{ l.code.toUpperCase() }}</span>
-                          </button>
-                          <div v-if="getFilteredLocales(file.searchQuery).length === 0" class="p-4 text-center text-xs text-gray-400 font-medium">
-                            No languages match your search
+                      <Transition
+                        enter-active-class="transition duration-200 ease-out"
+                        enter-from-class="opacity-0 translate-y-2"
+                        enter-to-class="opacity-100 translate-y-0"
+                      >
+                        <div v-if="file.isDropdownOpen" class="absolute left-0 right-0 top-full mt-2 z-50 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden">
+                          <div class="p-3 border-b border-gray-50 bg-gray-50/50">
+                            <input 
+                              v-model="file.searchQuery"
+                              type="text"
+                              placeholder="Search languages..."
+                              class="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                              @click.stop
+                              autoFocus
+                            />
+                          </div>
+                          <div class="max-h-60 overflow-y-auto scrollbar-thin">
+                            <button 
+                              v-for="l in getFilteredLocales(file.searchQuery)" 
+                              :key="l.code"
+                              @click="selectLocale(file.id, l.code)"
+                              class="w-full text-left px-5 py-3 text-xs font-black hover:bg-indigo-50 transition-colors flex items-center justify-between group"
+                            >
+                              <span class="text-gray-700 group-hover:text-indigo-600">{{ l.name }}</span>
+                              <span class="text-gray-300 font-black group-hover:text-indigo-300">{{ l.code.toUpperCase() }}</span>
+                            </button>
+                            <div v-if="getFilteredLocales(file.searchQuery).length === 0" class="p-8 text-center text-xs text-gray-400 font-black uppercase tracking-widest">
+                              No matches found
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Transition>
                     </div>
                   </div>
 
                   <!-- Error Banner for individual file -->
-                  <div v-if="file.error" class="flex-1 w-full p-2.5 bg-amber-50 border border-amber-100 rounded-lg flex items-center gap-2 text-amber-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-                    <span class="text-[10px] font-bold uppercase tracking-tight">{{ file.error }}</span>
+                  <div v-if="file.error" class="flex flex-col justify-end">
+                    <div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3 text-amber-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                      <div class="space-y-0.5">
+                        <span class="text-[10px] font-black uppercase tracking-tight">Parser Notice</span>
+                        <p class="text-[10px] font-medium leading-relaxed">{{ file.error }}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Add More Button -->
-              <label class="block p-4 border-2 border-dashed border-gray-200 rounded-xl text-center cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition-all group">
-                <span class="text-xs font-bold text-gray-400 group-hover:text-blue-500">+ Add More Files</span>
+              <label class="block p-6 border-2 border-dashed border-gray-100 rounded-2xl text-center cursor-pointer hover:bg-gray-50/50 hover:border-indigo-200 transition-all group">
+                <span class="text-xs font-black uppercase tracking-widest text-gray-400 group-hover:text-indigo-600 transition-colors">+ Add Additional Files</span>
                 <input type="file" class="hidden" accept=".json" multiple @change="handleFileUpload" />
               </label>
             </div>
           </div>
 
           <!-- Footer -->
-          <div class="bg-gray-50 p-6 flex items-center justify-between gap-3 border-t shrink-0">
-            <div class="text-[10px] font-black uppercase tracking-widest text-gray-400">
-              {{ stagedFiles.length }} files ready to process
+          <div class="bg-gray-50 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100 shrink-0">
+            <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+              <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+              {{ stagedFiles.length }} files ready for processing
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-4 w-full sm:w-auto">
               <button
                 type="button"
-                class="px-5 py-2.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
+                class="flex-1 sm:flex-none px-6 py-3 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
                 @click="$emit('close')"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                class="px-8 py-2.5 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-30 disabled:shadow-none"
+                class="flex-1 sm:flex-none px-10 py-3 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 disabled:opacity-30 disabled:shadow-none active:scale-95"
                 :disabled="!canConfirm"
                 @click="confirmAllUploads"
               >

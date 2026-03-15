@@ -44,7 +44,7 @@ This document is the primary reference for AI agents and developers working on t
 - **PublishedAt**: Always include `publishedAt: new Date().toISOString()` in mutations.
 
 ### 5. Gemini AI Protocol
-- **Model**: `gemini-1.5-flash` via the `@google/genai` library (server-side).
+- **Model**: `gemini-2.5-flash` via the `@google/genai` library (server-side).
 - **Batching**: Process strings in batches of **200** to stay within token/context limits.
 - **Sequential Merging**: In `useContentType.ts`, results must be merged into the store **per-locale** as they finish. DO NOT wait for the entire batch of locales to finish before updating the UI.
 
@@ -63,6 +63,15 @@ Every content type page must implement these 6 steps with strict locking (prereq
 
 ### 2. Supported Locales
 All components must use the centralized `SUPPORTED_LOCALES` constant from `~/types/translations`. It includes 19 locales: `cs, da, de, el, es, fi, fr, hu, id, it, ja, nb, nb_no, pt, sk, sv, th, vi, zh`.
+
+---
+
+## 🎨 UI & UX Standards
+- **Aesthetic**: "Refined Utilitarian Dashboard" - High information density, SaaS-like professional look.
+- **Colors**: Indigo primary (#4F46E5), Emerald success (#10B981), Rose error (#F43F5E), Amber warning (#F59E0B).
+- **Typography**: System sans-serif with `font-black` for headers and `font-medium` for body/labels.
+- **Mobile First**: All pages use a responsive layout with a mobile drawer navigation. Tables handle overflow via `min-w-[600px]` and horizontal scrolling.
+- **Micro-interactions**: Hover effects on cards, rotation on icons, and pulse animations for status indicators.
 
 ---
 

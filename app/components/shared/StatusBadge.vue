@@ -10,38 +10,39 @@ const props = defineProps<{
 const statusConfig: Record<string, { label: string, class: string }> = {
   missing: {
     label: 'Missing',
-    class: 'bg-red-100 text-red-700 border-red-200'
+    class: 'bg-rose-50 text-rose-700 border-rose-100'
   },
   'ai-generated': {
     label: 'AI Generated',
-    class: 'bg-blue-100 text-blue-700 border-blue-200'
+    class: 'bg-indigo-50 text-indigo-700 border-indigo-100'
   },
   manual: {
     label: 'Manual',
-    class: 'bg-purple-100 text-purple-700 border-purple-200'
+    class: 'bg-violet-50 text-violet-700 border-violet-100'
   },
   translated: {
     label: 'Translated',
-    class: 'bg-green-100 text-green-700 border-green-200'
+    class: 'bg-emerald-50 text-emerald-700 border-emerald-100'
   },
   success: {
     label: 'Success',
-    class: 'bg-green-100 text-green-700 border-green-200'
+    class: 'bg-emerald-50 text-emerald-700 border-emerald-100'
   },
   warning: {
     label: 'Warning',
-    class: 'bg-amber-100 text-amber-700 border-amber-200'
+    class: 'bg-amber-50 text-amber-700 border-amber-100'
   }
 }
 
-const config = computed(() => statusConfig[props.status] || { label: props.status, class: 'bg-gray-100 text-gray-700 border-gray-200' })
+const config = computed(() => statusConfig[props.status] || { label: props.status, class: 'bg-gray-50 text-gray-500 border-gray-100' })
 </script>
 
 <template>
   <span
-    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+    class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors"
     :class="config.class"
   >
+    <span class="w-1 h-1 rounded-full mr-1.5 opacity-50" :class="config.class.split(' ')[1].replace('text-', 'bg-')"></span>
     {{ text || config.label }}
   </span>
 </template>
