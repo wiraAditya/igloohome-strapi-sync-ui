@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@variant dark (&:is(.dark, .dark-mode, .dark *, .dark-mode *));
+
+@theme {
+  --color-indigo-950: #0a0a1a;
+  --bg-main: var(--bg-main);
+  --bg-card: var(--bg-card);
+  --text-main: var(--text-main);
+  --border-color: var(--border-color);
+}
+
+@layer base {
+  :root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --border-color: #e2e8f0;
+  }
+
+  .dark, [class~="dark"] {
+    --bg-main: #020617;
+    --bg-card: #0f172a;
+    --text-main: #f1f5f9;
+    --border-color: #1e293b;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Page transitions */
+.page-enter-active, .page-leave-active {
+  transition: all 0.2s ease-in-out;
+}
+.page-enter-from, .page-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}

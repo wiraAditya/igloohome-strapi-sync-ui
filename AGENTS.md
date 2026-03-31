@@ -8,6 +8,7 @@ This document is the primary reference for AI agents and developers working on t
 - **Framework**: Nuxt 4 (Source: `app/`, Server: `server/`)
 - **Compatibility Mode**: `future: { compatibilityVersion: 4 }`
 - **Frontend Engine**: Vite + Tailwind CSS v4 (Native Vite Plugin)
+- **Dark Mode**: Integrated via `@nuxtjs/color-mode` (Class strategy).
 - **State Management**: Pinia (Isolated stores: `categories`, `changelogs`, `faqs`, `ui`)
 - **API Strategy**: **Secure Nitro Proxy** (Mandatory for Hosting).
   - **Browser**: Calls local proxy routes (`/api/strapi`, `/api/gemini`, `/api/settings`).
@@ -44,7 +45,7 @@ This document is the primary reference for AI agents and developers working on t
 - **PublishedAt**: Always include `publishedAt: new Date().toISOString()` in mutations.
 
 ### 5. Gemini AI Protocol
-- **Model**: `gemini-2.5-flash` via the `@google/genai` library (server-side).
+- **Model**: `gemini-1.5-flash` via the `@google/genai` library (server-side).
 - **Batching**: Process strings in batches of **200** to stay within token/context limits.
 - **Sequential Merging**: In `useContentType.ts`, results must be merged into the store **per-locale** as they finish. DO NOT wait for the entire batch of locales to finish before updating the UI.
 
@@ -59,7 +60,7 @@ Every content type page must implement these 6 steps with strict locking (prereq
 3. **Generate AI Translations**: Sequential locale processing with per-locale retry.
 4. **Preview & Download**: Inline two-panel editor (Locale List | Translation Table).
 5. **Upload Manual Translation**: Multi-file drag-and-drop with auto-locale detection from filename and searchable dropdown override.
-6. **Sync to Strapi**: Confirmation gate + success timestamp tracking.
+6. **Sync to Strapi**: Individual or **Bulk Sync** capability with confirmation gate.
 
 ### 2. Supported Locales
 All components must use the centralized `SUPPORTED_LOCALES` constant from `~/types/translations`. It includes 19 locales: `cs, da, de, el, es, fi, fr, hu, id, it, ja, nb, nb_no, pt, sk, sv, th, vi, zh`.
@@ -68,9 +69,10 @@ All components must use the centralized `SUPPORTED_LOCALES` constant from `~/typ
 
 ## 🎨 UI & UX Standards
 - **Aesthetic**: "Refined Utilitarian Dashboard" - High information density, SaaS-like professional look.
+- **Dark Mode**: Every component MUST support `.dark` class variants. Use `slate-900/950` for dark backgrounds.
 - **Colors**: Indigo primary (#4F46E5), Emerald success (#10B981), Rose error (#F43F5E), Amber warning (#F59E0B).
 - **Typography**: System sans-serif with `font-black` for headers and `font-medium` for body/labels.
-- **Mobile First**: All pages use a responsive layout with a mobile drawer navigation. Tables handle overflow via `min-w-[600px]` and horizontal scrolling.
+- **Layout**: Permanent Vertical Sidebar (Desktop) / Drawer (Mobile).
 - **Micro-interactions**: Hover effects on cards, rotation on icons, and pulse animations for status indicators.
 
 ---
@@ -81,7 +83,7 @@ All components must use the centralized `SUPPORTED_LOCALES` constant from `~/typ
   - *Fix*: Use `asCategory(source)`, `asChangelog(source)`, `asFaq(source)`, or `getEntryId(source)` helper functions in the `<script setup>` block.
 - **Vite Dependency Discovery**: New libraries (like `jszip`) must be added to `optimizeDeps.include` in `nuxt.config.ts`.
 - **Duplicate Template Tags**: When editing `WorkflowPage.vue`, ensure no duplicate `<template>` or `<script>` blocks are created.
-- **SSR Mismatch**: The app is configured as `ssr: false` (SPA mode) for maximum stability with direct-to-browser interactions.
+- **SSR Mismatch**: The app is configured as `ssr: false` (SPA mode). Ensure all browser-only APIs are handled correctly.
 
 ---
 

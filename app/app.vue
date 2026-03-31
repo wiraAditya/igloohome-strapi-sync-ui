@@ -1,29 +1,44 @@
 <template>
-  <div class="min-h-screen bg-[#F8FAFC] font-sans antialiased text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
+  <div class="min-h-screen bg-[var(--bg-main)] font-sans antialiased text-[var(--text-main)] selection:bg-indigo-600 selection:text-white flex flex-col md:flex-row h-screen overflow-hidden transition-colors duration-300">
+    <!-- Scalable Sidebar Navigation -->
     <NavAppNav />
-    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <NuxtPage />
+
+    <!-- Main Content App-Shell -->
+    <main class="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+      <!-- Session Header (Status Bar) -->
+      <header class="hidden md:flex h-16 shrink-0 bg-[var(--bg-card)]/50 backdrop-blur-xl border-b border-[var(--border-color)] items-center justify-between px-8 z-10 transition-colors">
+        <div class="flex items-center gap-4">
+           <div class="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-800/50 rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            Session Sync Active
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <!-- Dark Mode Toggle Component -->
+          <div class="flex items-center gap-2 mr-2">
+             <SharedColorModeToggle />
+          </div>
+
+          <NuxtLink to="/settings" class="p-2 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </NuxtLink>
+        </div>
+      </header>
+
+      <!-- Scrollable Workspace -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth bg-[var(--bg-main)] transition-colors">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <NuxtPage />
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
 <style>
-/* Global scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #E2E8F0;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #CBD5E1;
-}
+/* Reset base styles handled by main.css */
 </style>

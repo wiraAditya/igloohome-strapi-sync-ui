@@ -21,16 +21,16 @@ const handleDownload = () => {
   <button
     type="button"
     :disabled="loading || !data"
-    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+    class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 border"
     @click="handleDownload"
     :class="[
       variant === 'secondary'
-        ? 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200'
+        ? 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white border-gray-200 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-700 shadow-sm'
         : variant === 'outline'
-        ? 'bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50'
+        ? 'bg-transparent text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
         : variant === 'ghost'
-        ? 'bg-transparent text-gray-600 hover:bg-gray-100'
-        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+        ? 'bg-transparent text-gray-500 dark:text-slate-400 border-transparent hover:bg-gray-100 dark:hover:bg-slate-800'
+        : 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40'
     ]"
   >
     <svg
@@ -58,16 +58,16 @@ const handleDownload = () => {
       <svg
         v-if="!loading"
         xmlns="http://www.w3.org/2000/svg"
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2"
+        stroke-width="2.5"
         stroke-linecap="round"
         stroke-linejoin="round"
       >
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4" />
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         <polyline points="7 10 12 15 17 10" />
         <line x1="12" x2="12" y1="15" y2="3" />
       </svg>

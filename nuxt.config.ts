@@ -10,8 +10,16 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/color-mode'
   ],
+
+  colorMode: {
+    classPrefix: '',
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'light'
+  },
 
   vite: {
     plugins: [
@@ -24,7 +32,7 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  ssr: false,
+  ssr: true,
 
   /**
    * ARCHITECTURAL DECISION (SECURE/HOSTED):

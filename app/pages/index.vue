@@ -45,7 +45,7 @@ const getLocaleCount = (store: any) => {
 <template>
   <div class="space-y-12 py-4">
     <!-- Hero Section -->
-    <div class="relative overflow-hidden rounded-3xl bg-indigo-900 px-8 py-12 shadow-2xl">
+    <div class="relative overflow-hidden rounded-3xl bg-indigo-900 dark:bg-indigo-950 px-8 py-12 shadow-2xl">
       <div class="relative z-10 max-w-2xl">
         <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
           Content <span class="text-indigo-400">Localization</span> Dashboard
@@ -64,8 +64,8 @@ const getLocaleCount = (store: any) => {
     <section>
       <div class="flex items-end justify-between mb-8 px-2">
         <div>
-          <h2 class="text-2xl font-black text-gray-900 tracking-tight uppercase">Content Types</h2>
-          <p class="text-sm text-gray-500 font-medium">Select a module to start synchronizing</p>
+          <h2 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Content Types</h2>
+          <p class="text-sm text-gray-500 dark:text-slate-400 font-medium">Select a module to start synchronizing</p>
         </div>
       </div>
 
@@ -74,12 +74,12 @@ const getLocaleCount = (store: any) => {
           v-for="type in contentTypes"
           :key="type.id"
           :to="type.path"
-          class="group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 border border-gray-100"
+          class="group relative flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 p-1 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 border border-gray-100 dark:border-slate-800"
         >
           <div class="flex flex-1 flex-col justify-between p-6">
             <div>
               <div class="flex items-center justify-between mb-6">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-3">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 transition-colors group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500 group-hover:rotate-3">
                   <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" :d="type.icon" />
                   </svg>
@@ -91,30 +91,30 @@ const getLocaleCount = (store: any) => {
                   />
                 </div>
               </div>
-              <h3 class="text-xl font-black text-gray-900 group-hover:text-indigo-600 transition-colors">
+              <h3 class="text-xl font-black text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 {{ type.name }}
               </h3>
-              <p class="mt-2 text-sm text-gray-500 font-medium leading-relaxed">
+              <p class="mt-2 text-sm text-gray-500 dark:text-slate-400 font-medium leading-relaxed">
                 {{ type.description }}
               </p>
             </div>
 
-            <div class="mt-8 grid grid-cols-2 gap-4 border-t border-gray-50 pt-6">
+            <div class="mt-8 grid grid-cols-2 gap-4 border-t border-gray-50 dark:border-slate-800 pt-6">
               <div class="space-y-1">
-                <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Target Locales</span>
-                <p class="text-lg font-bold text-gray-900">{{ getLocaleCount(type.store) }}</p>
+                <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">Target Locales</span>
+                <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getLocaleCount(type.store) }}</p>
               </div>
               <div class="space-y-1">
-                <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Synced to Strapi</span>
-                <p class="text-lg font-bold text-indigo-600">{{ getSyncedCount(type.store) }}</p>
+                <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">Synced to Strapi</span>
+                <p class="text-lg font-bold text-indigo-600 dark:text-indigo-400">{{ getSyncedCount(type.store) }}</p>
               </div>
             </div>
           </div>
           
           <!-- Hover Action Area -->
-          <div class="mt-auto bg-gray-50 p-4 flex items-center justify-between group-hover:bg-indigo-600 transition-colors">
-            <span class="text-xs font-black uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors">Manage Content</span>
-            <svg class="h-4 w-4 text-gray-400 group-hover:text-white transform group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="mt-auto bg-gray-50 dark:bg-slate-800/50 p-4 flex items-center justify-between group-hover:bg-indigo-600 dark:group-hover:bg-indigo-500 transition-colors">
+            <span class="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 group-hover:text-white transition-colors">Manage Content</span>
+            <svg class="h-4 w-4 text-gray-400 dark:text-slate-500 group-hover:text-white transform group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </div>
@@ -123,38 +123,38 @@ const getLocaleCount = (store: any) => {
     </section>
 
     <!-- Quick Start Guide -->
-    <section class="rounded-3xl bg-white border border-gray-100 p-8 shadow-sm">
+    <section class="rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-8 shadow-sm">
       <div class="flex flex-col md:flex-row gap-8 items-center">
-        <div class="bg-amber-50 p-6 rounded-2xl shrink-0">
-          <svg class="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl shrink-0">
+          <svg class="h-10 w-10 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div>
-          <h2 class="text-xl font-black text-gray-900 tracking-tight uppercase mb-4">Quick Start Workflow</h2>
+          <h2 class="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase mb-4">Quick Start Workflow</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="relative">
               <span class="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white shadow-lg">1</span>
-              <div class="h-full rounded-2xl bg-gray-50 p-4 pt-6">
-                <p class="text-xs font-bold text-gray-900 leading-tight">Select a content type from the dashboard cards above.</p>
+              <div class="h-full rounded-2xl bg-gray-50 dark:bg-slate-800/40 p-4 pt-6">
+                <p class="text-xs font-bold text-gray-900 dark:text-slate-200 leading-tight">Select a content type from the dashboard cards above.</p>
               </div>
             </div>
             <div class="relative">
               <span class="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white shadow-lg">2</span>
-              <div class="h-full rounded-2xl bg-gray-50 p-4 pt-6">
-                <p class="text-xs font-bold text-gray-900 leading-tight">Pull untranslated content from Strapi in Step 1.</p>
+              <div class="h-full rounded-2xl bg-gray-50 dark:bg-slate-800/40 p-4 pt-6">
+                <p class="text-xs font-bold text-gray-900 dark:text-slate-200 leading-tight">Pull untranslated content from Strapi in Step 1.</p>
               </div>
             </div>
             <div class="relative">
               <span class="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white shadow-lg">3</span>
-              <div class="h-full rounded-2xl bg-gray-50 p-4 pt-6">
-                <p class="text-xs font-bold text-gray-900 leading-tight">Select target locales and click "Start AI Translation".</p>
+              <div class="h-full rounded-2xl bg-gray-50 dark:bg-slate-800/40 p-4 pt-6">
+                <p class="text-xs font-bold text-gray-900 dark:text-slate-200 leading-tight">Select target locales and click "Start AI Translation".</p>
               </div>
             </div>
             <div class="relative">
               <span class="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white shadow-lg">4</span>
-              <div class="h-full rounded-2xl bg-gray-50 p-4 pt-6">
-                <p class="text-xs font-bold text-gray-900 leading-tight">Preview results and sync back to Strapi in Step 6.</p>
+              <div class="h-full rounded-2xl bg-gray-50 dark:bg-slate-800/40 p-4 pt-6">
+                <p class="text-xs font-bold text-gray-900 dark:text-slate-200 leading-tight">Preview results and sync back to Strapi in Step 6.</p>
               </div>
             </div>
           </div>

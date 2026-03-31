@@ -15,17 +15,17 @@ const percentage = computed(() => {
 
 <template>
   <div class="w-full">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-sm font-medium text-gray-700">
-        {{ label || 'Progress' }}
+    <div v-if="label" class="flex items-center justify-between mb-2">
+      <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">
+        {{ label }}
       </span>
-      <span class="text-sm font-medium text-gray-700">
+      <span class="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
         {{ current }}/{{ total }} ({{ percentage }}%)
       </span>
     </div>
-    <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+    <div class="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden shadow-inner border border-gray-100 dark:border-slate-800">
       <div
-        class="bg-blue-600 h-2.5 transition-all duration-300 ease-out"
+        class="bg-indigo-600 dark:bg-indigo-500 h-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(79,70,229,0.3)]"
         :style="{ width: `${percentage}%` }"
       ></div>
     </div>
