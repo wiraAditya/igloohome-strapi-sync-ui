@@ -3,12 +3,35 @@ import type { ContentType, LocaleCode } from "~/types/translations";
 
 export const useGemini = () => {
   const localeMap: Record<string, string> = SUPPORTED_LOCALES.reduce(
-    (acc: Record<string, string>, l: any) => {
+    (acc: Record<string, string>, l) => {
       acc[l.code] = l.name;
       return acc;
     },
     {},
   );
+
+  const formatDuration = (startTime: Date, endTime: Date): string => {
+    let diff = Math.abs(endTime.getTime() - startTime.getTime());
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    diff %= 1000 * 60 * 60 * 24;
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    diff %= 1000 * 60 * 60;
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    diff %= 1000 * 60;
+
+    const seconds = Math.floor(diff / 1000);
+
+    const parts = [];
+    if (days) parts.push(`${days} day${days !== 1 ? "s" : ""}`);
+    if (hours) parts.push(`${hours} hour${hours !== 1 ? "s" : ""}`);
+    if (minutes) parts.push(`${minutes} minute${minutes !== 1 ? "s" : ""}`);
+    if (seconds) parts.push(`${seconds} second${seconds !== 1 ? "s" : ""}`);
+
+    return parts.join(", ") || "0 seconds";
+  };
 
   const translateStrings = async (
     values: string[],
@@ -44,9 +67,10 @@ export const useGemini = () => {
   ): Promise<string[]> => {
     const languageName = localeMap[targetLocale] || targetLocale;
     const prompt = `
-You are a professional software localisation translator.
+You are native speaker of the language ${languageName}, you will need to translate from english.
 Translate the following JSON array of strings from English to ${languageName} (${targetLocale}).
-This content is from a SaaS product's ${contentType} section.
+This content is from a SaaS product's ${contentType} section. Translate with context, do not translate word by word.
+content will be published as changelog on the website.
 
 Rules:
 - Return ONLY a valid JSON array of strings. No markdown, no explanation, no code fences.
@@ -68,7 +92,7 @@ ${JSON.stringify(batch)}
       const response = await $fetch<any>("/api/gemini", {
         method: "POST",
         body: {
-          model: "gemini-2.5-flash",
+          model: "gemini-3.1-flash-lite-preview",
           contents: [
             {
               parts: [
@@ -126,20 +150,29 @@ ${JSON.stringify(batch)}
     ) => void,
   ): Promise<Record<string, string[]>> => {
     const results: Record<string, string[]> = {};
+    const startingTime = new Date();
+    await Promise.all(
+      targetLocales.map(async (locale) => {
+        try {
+          if (onLocaleProgress) onLocaleProgress(locale, "running");
 
-    for (const locale of targetLocales) {
-      try {
-        if (onLocaleProgress) onLocaleProgress(locale, "running");
+          const translated = await translateStrings(
+            values,
+            locale,
+            contentType,
+          );
+          results[locale] = translated;
 
-        const translated = await translateStrings(values, locale, contentType);
-        results[locale] = translated;
-
-        if (onLocaleProgress) onLocaleProgress(locale, "done", translated);
-      } catch (error: any) {
-        if (onLocaleProgress)
-          onLocaleProgress(locale, "error", undefined, error.message);
-      }
-    }
+          if (onLocaleProgress) onLocaleProgress(locale, "done", translated);
+        } catch (error: any) {
+          if (onLocaleProgress)
+            onLocaleProgress(locale, "error", undefined, error.message);
+        }
+      }),
+    );
+    const endTime = new Date();
+    const duration = formatDuration(startingTime, endTime);
+    console.log(duration);
 
     return results;
   };

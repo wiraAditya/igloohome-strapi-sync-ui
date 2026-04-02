@@ -79,7 +79,7 @@ const testConnection = async () => {
           <h3 class="font-bold uppercase tracking-wider text-sm">AI Translation</h3>
         </div>
         <p class="text-indigo-100 text-xs leading-relaxed">
-          Powered by Google Gemini 1.5 Flash. The system uses batching and sequential merging to provide instant visual feedback during translation.
+          Powered by Google Gemini 1.5 Flash. The system uses batching and parallel processing to provide instant visual feedback during translation.
         </p>
       </div>
 

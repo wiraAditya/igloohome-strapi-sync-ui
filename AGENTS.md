@@ -45,9 +45,9 @@ This document is the primary reference for AI agents and developers working on t
 - **PublishedAt**: Always include `publishedAt: new Date().toISOString()` in mutations.
 
 ### 5. Gemini AI Protocol
-- **Model**: `gemini-1.5-flash` via the `@google/genai` library (server-side).
+- **Model**: `gemini-3.1-flash-lite-preview` via the `@google/genai` library (server-side).
 - **Batching**: Process strings in batches of **200** to stay within token/context limits.
-- **Sequential Merging**: In `useContentType.ts`, results must be merged into the store **per-locale** as they finish. DO NOT wait for the entire batch of locales to finish before updating the UI.
+- **Parallel Processing**: In `useContentType.ts`, results must be merged into the store **per-locale** as they finish. DO NOT wait for the entire batch of locales to finish before updating the UI.
 
 ---
 
@@ -57,7 +57,7 @@ This document is the primary reference for AI agents and developers working on t
 Every content type page must implement these 6 steps with strict locking (prerequisites):
 1. **Generate Source JSON**: Pull from Strapi (with "Unpublished Only" toggle).
 2. **Review Source Keys**: Read-only preview of source content.
-3. **Generate AI Translations**: Sequential locale processing with per-locale retry.
+3. **Generate AI Translations**: Parallel locale processing with per-locale retry.
 4. **Preview & Download**: Inline two-panel editor (Locale List | Translation Table).
 5. **Upload Manual Translation**: Multi-file drag-and-drop with auto-locale detection from filename and searchable dropdown override.
 6. **Sync to Strapi**: Individual or **Bulk Sync** capability with confirmation gate.
