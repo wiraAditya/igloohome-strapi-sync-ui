@@ -25,7 +25,7 @@ export const SUPPORTED_LOCALES: { code: LocaleCode; name: string }[] = [
   { code: 'zh', name: 'Chinese' }
 ]
 
-export type ContentType = 'categories' | 'changelogs' | 'faqs'
+export type ContentType = 'categories' | 'changelogs' | 'faqs' | 'igw-changelogs'
 
 export type KeyStatus = 'missing' | 'ai-generated' | 'manual' | 'translated'
 
@@ -58,7 +58,32 @@ export interface FaqEntry extends BaseStrapiEntry {
   content: string
 }
 
-export type StrapiEntry = CategoryEntry | ChangelogEntry | FaqEntry
+/**
+ * IGW Changelog Parent (Metadata)
+ */
+export interface IgwChangelogEntry extends BaseStrapiEntry {
+  version: string
+  releaseDate: string
+  publishedAt?: string | null
+  locales: string[]
+  localeCounts?: Record<string, number>
+}
+
+/**
+ * IGW Changelog Localized Detail (Translatable Content)
+ */
+export interface IgwChangelogDtlEntry extends BaseStrapiEntry {
+  title: string
+  content: string
+  parentId: string
+}
+
+export type StrapiEntry =
+  | CategoryEntry
+  | ChangelogEntry
+  | FaqEntry
+  | IgwChangelogEntry
+  | IgwChangelogDtlEntry
 
 export interface ContentTypeState {
   sourceEntries: StrapiEntry[]

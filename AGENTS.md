@@ -35,12 +35,14 @@ This document is the primary reference for AI agents and developers working on t
 - The browser must never see these keys. Use the Nitro proxy routes for all external API calls.
 - The `/api/settings` route must only return boolean flags (e.g., `isStrapiTokenSet`) or masked information, never raw keys.
 
-### 4. Strapi i18n Protocol
+### 4. Strapi i18n Protocol (Refined)
+- **Sync Logic**: ALWAYS follow the **"Fetch-Check-Update/Create"** pattern.
+  - 1. Fetch the source entry with its existing `localizations`.
+  - 2. **Check**: Determine if the target locale already exists in the localizations array.
+  - 3. **Update**: If locale exists, use the `UPDATE` mutation on the specific localized ID.
+  - 4. **Create**: If locale is missing, use the `SUBMIT` (Localization) mutation on the source ID.
+  - **Goal**: Prevent duplicate entries and maintain correct relation links across locales.
 - **Fetch Logic**: Support optional filtering for unpublished content using `unpublishedOnly`. Filter: `{ publishedAt: { eq: null } }`.
-- **Sync Logic**: Follow the "Fetch-Check-Update/Create" pattern.
-  - 1. Fetch source ID with its `localizations`.
-  - 2. If locale exists: use `UPDATE` mutation on the localized ID.
-  - 3. If locale missing: use `SUBMIT` (Localization) mutation on the source ID.
 - **FAQ Mapping**: When syncing FAQs, you MUST look up the localized ID of the associated Category. Use a `categoryCache` to optimize repeated lookups.
 - **PublishedAt**: Always include `publishedAt: new Date().toISOString()` in mutations.
 
@@ -53,21 +55,44 @@ This document is the primary reference for AI agents and developers working on t
 
 ## 🛠 Feature Specifications
 
-### 1. 6-Step Workflow
-Every content type page must implement these 6 steps with strict locking (prerequisites):
+### 1. 6-Step Standard Workflow
+Used for general content types (Categories, FAQs):
 1. **Generate Source JSON**: Pull from Strapi (with "Unpublished Only" toggle).
 2. **Review Source Keys**: Read-only preview of source content.
 3. **Generate AI Translations**: Parallel locale processing with per-locale retry.
 4. **Preview & Download**: Inline two-panel editor (Locale List | Translation Table).
-5. **Upload Manual Translation**: Multi-file drag-and-drop with auto-locale detection from filename and searchable dropdown override.
+5. **Upload Manual Translation**: Multi-file drag-and-drop with auto-locale detection.
 6. **Sync to Strapi**: Individual or **Bulk Sync** capability with confirmation gate.
 
-### 2. Supported Locales
+### 2. IGW Changelogs Architecture
+- **Parent-Child Structure**: 
+  - `IgwChangelog`: The non-localized parent container holding `version` and `date`.
+  - `IgwChangelogDtl`: The localized child entity holding `title` and `changes`.
+- **Dedicated Workspace**: Per-version translation at `/translate/[id]`.
+- **4-Step Workspace Workflow**:
+  1. **Review Source**: Verify English (EN) source content.
+  2. **Locale Selection**: Choose target locales for translation.
+  3. **AI Translate**: Generate localized versions via Gemini.
+  4. **Review & Sync**: Manual edit/review before pushing to Strapi.
+- **Deletion Rule**: To maintain cross-locale structural integrity, **deletion of log entries** (`IgwChangelogDtl`) is strictly restricted to **English (EN) mode**.
+
+### 3. Supported Locales
 All components must use the centralized `SUPPORTED_LOCALES` constant from `~/types/translations`. It includes 19 locales: `cs, da, de, el, es, fi, fr, hu, id, it, ja, nb, nb_no, pt, sk, sv, th, vi, zh`.
 
 ---
 
 ## 🎨 UI & UX Standards
+
+### 1. Global UI Framework
+- **UI Store**: `useUiStore` centralizes global interaction states:
+  - `confirm`: Triggers the global confirmation modal.
+  - `toast`: Manages system-wide feedback notifications.
+  - `loading`: Global overlay for async operations.
+- **Reusable Components**:
+  - **SharedConfirmDialog**: Mandatory replacement for `window.confirm`.
+  - **SharedToastContainer**: Centralized mount point for all toast notifications.
+
+### 2. Visual Identity
 - **Aesthetic**: "Refined Utilitarian Dashboard" - High information density, SaaS-like professional look.
 - **Dark Mode**: Every component MUST support `.dark` class variants. Use `slate-900/950` for dark backgrounds.
 - **Colors**: Indigo primary (#4F46E5), Emerald success (#10B981), Rose error (#F43F5E), Amber warning (#F59E0B).

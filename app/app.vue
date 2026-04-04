@@ -20,6 +20,11 @@ useHead({
 <template>
   <NuxtLoadingIndicator color="#4F46E5" :height="2" />
 
+  <!-- Global UI Elements -->
+  <SharedToastContainer />
+  <SharedConfirmDialog />
+  <SharedLoadingOverlay />
+
   <div
     class="min-h-screen bg-(--bg-main) font-sans antialiased text-(--text-main) selection:bg-indigo-600 selection:text-white flex flex-col md:flex-row h-screen overflow-hidden transition-colors duration-300"
   >

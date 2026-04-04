@@ -15,7 +15,9 @@ export const useContentType = (type: ContentType) => {
     ? useCategoriesStore()
     : type === 'changelogs'
     ? useChangelogsStore()
-    : useFaqsStore()
+    : type === 'faqs'
+    ? useFaqsStore()
+    : (() => { throw new Error(`Unsupported content type for generic workflow: ${type}`) })()
 
   /**
    * Fetch from Strapi and store in sourceEntries.

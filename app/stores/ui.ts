@@ -4,13 +4,33 @@ import { ref } from 'vue'
 export interface Toast {
   id: string
   message: string
-  type: 'success' | 'error' | 'info'
+  type: 'success' | 'error' | 'info' | 'warning'
   timeout?: number
+}
+
+export interface ConfirmDialogOptions {
+  title: string
+  message: string
+  confirmText?: string
+  cancelText?: string
+  type?: 'info' | 'warning' | 'danger'
+  onConfirm?: () => void | Promise<void>
+  onCancel?: () => void
 }
 
 export const useUiStore = defineStore('ui', () => {
   const toasts = ref<Toast[]>([])
   const isLoading = ref(false)
+  const confirmDialog = ref<{
+    isOpen: boolean
+    options: ConfirmDialogOptions
+  }>({
+    isOpen: false,
+    options: {
+      title: '',
+      message: '',
+    },
+  })
 
   const addToast = (message: string, type: Toast['type'] = 'info', timeout = 5000) => {
     const id = Math.random().toString(36).substring(2, 9)
@@ -35,11 +55,30 @@ export const useUiStore = defineStore('ui', () => {
     isLoading.value = loading
   }
 
+  const confirm = (options: ConfirmDialogOptions) => {
+    confirmDialog.value = {
+      isOpen: true,
+      options: {
+        confirmText: 'Confirm',
+        cancelText: 'Cancel',
+        type: 'info',
+        ...options,
+      },
+    }
+  }
+
+  const closeConfirm = () => {
+    confirmDialog.value.isOpen = false
+  }
+
   return {
     toasts,
     isLoading,
+    confirmDialog,
     addToast,
     removeToast,
-    setLoading
+    setLoading,
+    confirm,
+    closeConfirm,
   }
 })

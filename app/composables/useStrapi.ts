@@ -1,4 +1,17 @@
-import type { ContentType, StrapiEntry, CategoryEntry, ChangelogEntry, FaqEntry } from '~/types/translations'
+import type { ContentType, StrapiEntry, CategoryEntry, ChangelogEntry, FaqEntry, IgwChangelogEntry, IgwChangelogDtlEntry } from '~/types/translations'
+
+const GET_LOCALES = `
+  query Locales {
+    i18NLocales(pagination: { pageSize: 1000 }) {
+      data {
+        attributes {
+          code
+          name
+        }
+      }
+    }
+  }
+`
 
 const GET_CATEGORIES = `
   query Categories($pagination: PaginationArg, $filters: IgloohomeFaqCategoryFiltersInput) {
@@ -56,6 +69,36 @@ const GET_FAQS = `
           Category {
             data {
               id
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+const GET_IGW_CHANGELOGS = `
+  query IgwChangelogs($pagination: PaginationArg, $filters: IgwChangelogFiltersInput) {
+    igwChangelogs(
+      pagination: $pagination
+      publicationState: PREVIEW
+      filters: $filters
+      sort: "ReleaseDate:asc"
+    ) {
+      data {
+        id
+        attributes {
+          Version
+          ReleaseDate
+          publishedAt
+          igw_changelog_dtls(pagination: { pageSize: 1000 }) {
+            data {
+              id
+              attributes {
+                Title
+                Changes
+                locale
+              }
             }
           }
         }
@@ -127,6 +170,28 @@ const GET_FAQ_BY_ID = `
   }
 `
 
+const GET_IGW_CHANGELOG_DTL_BY_ID = `
+  query IgwChangelogDtl($id: ID) {
+    igwChangelogDtl(id: $id) {
+      data {
+        id
+        attributes {
+          Title
+          Changes
+          localizations(pagination: { pageSize: 1000 }) {
+            data {
+              id
+              attributes {
+                locale
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
 const SUBMIT_CATEGORY = `
   mutation CreateIgloohomeFaqCategoryLocalization($locale: I18NLocaleCode, $id: ID, $data: IgloohomeFaqCategoryInput) {
     createIgloohomeFaqCategoryLocalization(locale: $locale, id: $id, data: $data) {
@@ -175,6 +240,62 @@ const UPDATE_FAQ = `
   }
 `
 
+const SUBMIT_IGW_CHANGELOG_DTL = `
+  mutation CreateIgwChangelogDtlLocalization($locale: I18NLocaleCode, $id: ID, $data: IgwChangelogDtlInput) {
+    createIgwChangelogDtlLocalization(locale: $locale, id: $id, data: $data) {
+      data { id }
+    }
+  }
+`
+
+const UPDATE_IGW_CHANGELOG_DTL = `
+  mutation UpdateIgwChangelogDtl($id: ID!, $data: IgwChangelogDtlInput!) {
+    updateIgwChangelogDtl(id: $id, data: $data) {
+      data { id }
+    }
+  }
+`
+
+const CREATE_IGW_CHANGELOG_DTL = `
+  mutation CreateIgwChangelogDtl($data: IgwChangelogDtlInput!) {
+    createIgwChangelogDtl(data: $data) {
+      data { id }
+    }
+  }
+`
+
+const CREATE_IGW_CHANGELOG = `
+  mutation CreateIgwChangelog($data: IgwChangelogInput!) {
+    createIgwChangelog(data: $data) {
+      data { id }
+    }
+  }
+`
+
+const UPDATE_IGW_CHANGELOG = `
+  mutation UpdateIgwChangelog($id: ID!, $data: IgwChangelogInput!) {
+    updateIgwChangelog(id: $id, data: $data) {
+      data { id }
+    }
+  }
+`
+
+const DELETE_IGW_CHANGELOG = `
+  mutation DeleteIgwChangelog($id: ID!) {
+    deleteIgwChangelog(id: $id) {
+      data { id }
+    }
+  }
+`
+
+const DELETE_IGW_CHANGELOG_DTL = `
+  mutation DeleteIgwChangelogDtl($id: ID!) {
+    deleteIgwChangelogDtl(id: $id) {
+      data { id }
+    }
+  }
+`
+
 export const useStrapi = () => {
   const queryMap = {
     categories: {
@@ -203,8 +324,48 @@ export const useStrapi = () => {
     }
   } as const
 
-  const graphqlFetch = async <T = any>(query: string, variables: Record<string, any> = {}): Promise<T> => {
-    const response = await $fetch<{ data: T, errors?: any[] }>('/api/strapi', {
+  interface StrapiLocalesResponse {
+    i18NLocales: {
+      data: Array<{
+        attributes: {
+          code: string
+          name: string
+        }
+      }>
+    }
+  }
+
+  interface IgwChangelogsResponse {
+    igwChangelogs: {
+      data: Array<{
+        id: string | number
+        attributes: {
+          Version: string
+          ReleaseDate: string
+          publishedAt: string
+          igw_changelog_dtls?: {
+            data: Array<{
+              id: string | number
+              attributes: {
+                Title: string
+                Changes: string
+                locale: string
+              }
+            }>
+          }
+        }
+      }>
+    }
+  }
+
+  interface GenericStrapiResponse {
+    [key: string]: {
+      data: any | any[]
+    }
+  }
+
+  const graphqlFetch = async <T>(query: string, variables: Record<string, unknown> = {}): Promise<T> => {
+    const response = await $fetch<{ data: T, errors?: { message: string }[] }>('/api/strapi', {
       method: 'POST',
       body: {
         query,
@@ -222,16 +383,177 @@ export const useStrapi = () => {
     return response.data
   }
 
+  const getLocales = async (): Promise<{ code: string; name: string }[]> => {
+    const data = await graphqlFetch<StrapiLocalesResponse>(GET_LOCALES)
+    return data.i18NLocales.data.map((item) => ({
+      code: item.attributes.code,
+      name: item.attributes.name
+    }))
+  }
+
+  const getIgwChangelogs = async (unpublishedOnly = false): Promise<{ parents: IgwChangelogEntry[]; dtls: IgwChangelogDtlEntry[] }> => {
+    const variables: Record<string, unknown> = { pagination: { pageSize: 1000 } }
+    if (unpublishedOnly) {
+      variables.filters = { publishedAt: { eq: null } }
+    }
+    const data = await graphqlFetch<IgwChangelogsResponse>(GET_IGW_CHANGELOGS, variables)
+    const parents: IgwChangelogEntry[] = []
+    const dtls: IgwChangelogDtlEntry[] = []
+
+    data.igwChangelogs.data.forEach((item) => {
+      const { id, attributes } = item
+      const allDtls = attributes.igw_changelog_dtls?.data || []
+      
+      const localeCounts: Record<string, number> = {}
+      const localesSet = new Set<string>()
+
+      allDtls.forEach((dtl) => {
+        const loc = dtl.attributes.locale || 'en'
+        localesSet.add(loc)
+        localeCounts[loc] = (localeCounts[loc] || 0) + 1
+      })
+
+      parents.push({
+        id: id.toString(),
+        version: attributes.Version,
+        releaseDate: attributes.ReleaseDate,
+        publishedAt: attributes.publishedAt,
+        locales: Array.from(localesSet),
+        localeCounts
+      })
+
+      // Source entries for workflow must be 'en'
+      const baseDtls = allDtls.filter((d) => (d.attributes.locale || 'en') === 'en')
+      
+      baseDtls.forEach((dtl) => {
+        dtls.push({
+          id: dtl.id.toString(),
+          title: dtl.attributes.Title,
+          content: dtl.attributes.Changes,
+          parentId: id.toString()
+        })
+      })
+    })
+
+    return { parents, dtls }
+  }
+
+  const createIgwChangelog = async (data: any): Promise<any> => {
+    return await graphqlFetch(CREATE_IGW_CHANGELOG, { data })
+  }
+
+  const updateIgwChangelog = async (id: string, data: any): Promise<any> => {
+    return await graphqlFetch(UPDATE_IGW_CHANGELOG, { id, data })
+  }
+
+  const deleteIgwChangelog = async (id: string): Promise<any> => {
+    // 1. Fetch to get children IDs for cascade delete
+    const data = await graphqlFetch<any>(`
+      query IgwChangelog($id: ID) {
+        igwChangelog(id: $id) {
+          data {
+            attributes {
+              igw_changelog_dtls(pagination: { pageSize: 1000 }) {
+                data { id }
+              }
+            }
+          }
+        }
+      }
+    `, { id })
+
+    const dtlIds = data.igwChangelog?.data?.attributes?.igw_changelog_dtls?.data?.map((d: any) => d.id) || []
+
+    // 2. Delete children first
+    for (const dtlId of dtlIds) {
+      await graphqlFetch(DELETE_IGW_CHANGELOG_DTL, { id: dtlId })
+    }
+
+    // 3. Delete parent
+    return await graphqlFetch(DELETE_IGW_CHANGELOG, { id })
+  }
+
+  const publishIgwChangelog = async (id: string, publish: boolean): Promise<void> => {
+    const publishedAt = publish ? new Date().toISOString() : null
+    
+    // 1. Publish/Unpublish parent
+    await graphqlFetch(UPDATE_IGW_CHANGELOG, { 
+      id, 
+      data: { publishedAt } 
+    })
+
+    // 2. Publish/Unpublish children (dtls)
+    const data = await graphqlFetch<any>(`
+      query IgwChangelog($id: ID) {
+        igwChangelog(id: $id) {
+          data {
+            attributes {
+              igw_changelog_dtls(pagination: { pageSize: 1000 }) {
+                data { id }
+              }
+            }
+          }
+        }
+      }
+    `, { id })
+
+    const dtlIds = data.igwChangelog?.data?.attributes?.igw_changelog_dtls?.data?.map((d: any) => d.id) || []
+    
+    for (const dtlId of dtlIds) {
+      await graphqlFetch(UPDATE_IGW_CHANGELOG_DTL, { 
+        id: dtlId, 
+        data: { publishedAt } 
+      })
+    }
+  }
+
+  const getIgwChangelogDtls = async (parentId: string, locale: string): Promise<IgwChangelogDtlEntry[]> => {
+    const query = `
+      query IgwChangelogDtls($parentId: ID, $locale: String) {
+        igwChangelog(id: $parentId) {
+          data {
+            id
+            attributes {
+              igw_changelog_dtls(filters: { locale: { eq: $locale } }, pagination: { pageSize: 1000 }) {
+                data {
+                  id
+                  attributes {
+                    Title
+                    Changes
+                    locale
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `
+    const data = await graphqlFetch<any>(query, { parentId, locale })
+    const dtls = data.igwChangelog?.data?.attributes?.igw_changelog_dtls?.data || []
+    
+    return dtls.map((d: any) => ({
+      id: d.id.toString(),
+      title: d.attributes.Title,
+      content: d.attributes.Changes,
+      parentId: parentId
+    })) as IgwChangelogDtlEntry[]
+  }
+
   const fetchCollection = async (type: ContentType, unpublishedOnly = false): Promise<StrapiEntry[]> => {
-    const qConfig = queryMap[type]
-    const variables: any = { pagination: { pageSize: 1000 } }
+    const qConfig = queryMap[type as keyof typeof queryMap]
+    if (!qConfig) {
+      throw new Error(`Content type ${type} is not supported in fetchCollection`)
+    }
+
+    const variables: Record<string, unknown> = { pagination: { pageSize: 1000 } }
     
     if (unpublishedOnly) {
       variables.filters = { publishedAt: { eq: null } }
     }
     
-    const data = await graphqlFetch(qConfig.all, variables)
-    const items = data[qConfig.key].data
+    const data = await graphqlFetch<GenericStrapiResponse>(qConfig.all, variables)
+    const items = data[qConfig.key]?.data || []
 
     return items.map((item: any) => {
       const { id, attributes } = item
@@ -298,11 +620,14 @@ export const useStrapi = () => {
     type: ContentType,
     locale: string,
     translatedEntries: StrapiEntry[]
-  ) => {
+  ): Promise<{ synced: number; failed: number; errors: string[] }> => {
     let synced = 0
     let failed = 0
     const errors: string[] = []
-    const qConfig = queryMap[type]
+    const qConfig = queryMap[type as keyof typeof queryMap]
+    if (!qConfig) {
+      throw new Error(`Content type ${type} is not supported in pushLocaleToStrapi`)
+    }
 
     // Cache for category lookups to optimize FAQ sync
     const categoryCache: Record<string, string> = {}
@@ -318,7 +643,7 @@ export const useStrapi = () => {
       await Promise.all(chunk.map(async (entry) => {
         try {
           // 1. Fetch source entry by ID with localizations
-          const sourceData = await graphqlFetch(qConfig.byId, { id: entry.id })
+          const sourceData = await graphqlFetch<GenericStrapiResponse>(qConfig.byId, { id: entry.id })
           const sourceItem = sourceData[qConfig.singleKey]?.data
           
           if (!sourceItem) {
@@ -348,7 +673,7 @@ export const useStrapi = () => {
             // Map source category ID to localized category ID if available
             if (faq.category) {
               if (!categoryCache[faq.category]) {
-                const catData = await graphqlFetch(queryMap.categories.byId, { id: faq.category })
+                const catData = await graphqlFetch<any>(queryMap.categories.byId, { id: faq.category })
                 const catLocs = catData.igloohomeFaqCategory?.data?.attributes?.localizations?.data || []
                 const catLoc = catLocs.find((loc: any) => loc.attributes?.locale === locale)
                 categoryCache[faq.category] = catLoc ? catLoc.id : faq.category
@@ -357,7 +682,7 @@ export const useStrapi = () => {
             }
           }
 
-          // 3. Update existing localization or create new one
+        // 3. Update existing localization or create new one
           if (existingLoc) {
             await graphqlFetch(qConfig.update, {
               id: existingLoc.id,
@@ -384,16 +709,28 @@ export const useStrapi = () => {
     return { synced, failed, errors }
   }
 
-  const testConnection = async () => {
+  const testConnection = async (): Promise<boolean> => {
     await graphqlFetch(GET_CATEGORIES, { pagination: { pageSize: 1 } })
     return true
   }
 
   return {
     fetchCollection,
+    getIgwChangelogs,
+    getIgwChangelogDtls,
+    createIgwChangelog,
+    updateIgwChangelog,
+    deleteIgwChangelog,
+    publishIgwChangelog,
+    deleteIgwChangelogDtl: async (id: string) => graphqlFetch(DELETE_IGW_CHANGELOG_DTL, { id }),
+    createIgwChangelogDtl: async (data: any) => graphqlFetch(CREATE_IGW_CHANGELOG_DTL, { data }),
+    updateIgwChangelogDtl: async (id: string, data: any) => graphqlFetch(UPDATE_IGW_CHANGELOG_DTL, { id, data }),
+    submitIgwChangelogDtl: async (id: string, locale: string, data: any) => graphqlFetch(SUBMIT_IGW_CHANGELOG_DTL, { id, locale, data }),
     extractTranslatableFields,
     mergeTranslations,
     pushLocaleToStrapi,
-    testConnection
+    testConnection,
+    getLocales,
+    graphqlFetch
   }
 }
