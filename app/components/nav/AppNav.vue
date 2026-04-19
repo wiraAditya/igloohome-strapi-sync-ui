@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()
+const authStore = useAuthStore()
 const isMobileMenuOpen = ref(false)
+
+const handleLogout = async () => {
+  await authStore.logout()
+  navigateTo('/login')
+}
 
 interface NavLink {
   name: string
@@ -46,6 +53,17 @@ const navigation: NavSection[] = [
     ]
   }
 ]
+
+const filteredNavigation = computed(() => {
+  const roleName = authStore.user?.role?.name?.toLowerCase()
+  if (roleName === 'changelogs') {
+    return navigation.filter(section => 
+      section.group === 'Iglooworks' || 
+      (section.group === null && section.links.some(l => l.name === 'Settings'))
+    )
+  }
+  return navigation
+})
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -91,7 +109,7 @@ watch(() => route.path, () => {
 
     <!-- Navigation Area -->
     <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-8 mt-4 md:mt-0">
-      <div v-for="section in navigation" :key="section.group || 'standalone'" class="space-y-1">
+      <div v-for="section in filteredNavigation" :key="section.group || 'standalone'" class="space-y-1">
         <div v-if="section.group" class="px-4 mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400/40">
           {{ section.group }}
         </div>
@@ -117,6 +135,17 @@ watch(() => route.path, () => {
 
     <!-- Footer Meta -->
     <div class="p-6 mt-auto border-t border-white/5 space-y-4">
+      <!-- Logout Button -->
+      <button 
+        @click="handleLogout"
+        class="w-full group flex items-center gap-3.5 px-4 py-3 text-sm font-bold rounded-2xl transition-all duration-200 text-rose-400/80 hover:text-white hover:bg-rose-500/20 active:scale-95"
+      >
+        <svg class="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span class="truncate">Logout Session</span>
+      </button>
+
        <div class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl">
         <div class="relative flex h-2 w-2 shrink-0">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
