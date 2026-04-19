@@ -76,6 +76,7 @@ export interface IgwChangelogDtlEntry extends BaseStrapiEntry {
   title: string
   content: string
   parentId: string
+  tagIds?: string[]
 }
 
 export type StrapiEntry =

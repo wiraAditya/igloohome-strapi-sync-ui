@@ -1,16 +1,24 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useUiStore } from '~/stores/ui'
 
 const uiStore = useUiStore()
+const isConfirming = ref(false)
 
 const handleConfirm = async () => {
   if (uiStore.confirmDialog.options.onConfirm) {
-    await uiStore.confirmDialog.options.onConfirm()
+    isConfirming.value = true
+    try {
+      await uiStore.confirmDialog.options.onConfirm()
+    } finally {
+      isConfirming.value = false
+    }
   }
   uiStore.closeConfirm()
 }
 
 const handleCancel = () => {
+  if (isConfirming.value) return
   if (uiStore.confirmDialog.options.onCancel) {
     uiStore.confirmDialog.options.onCancel()
   }
@@ -33,8 +41,8 @@ const handleCancel = () => {
         class="fixed inset-0 z-[60] flex items-center justify-center p-4"
       >
         <!-- Backdrop -->
-        <div 
-          class="absolute inset-0 bg-indigo-950/60 dark:bg-slate-950/80 backdrop-blur-md" 
+        <div
+          class="absolute inset-0 bg-indigo-950/60 dark:bg-slate-950/80 backdrop-blur-md"
           @click="handleCancel"
         ></div>
         
@@ -72,24 +80,30 @@ const handleCancel = () => {
           <div class="bg-gray-50 dark:bg-slate-800/50 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-center gap-4 border-t border-gray-100 dark:border-slate-800">
             <button
               type="button"
-              class="w-full sm:w-auto px-6 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              :disabled="isConfirming"
+              class="w-full sm:w-auto px-6 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               @click="handleCancel"
             >
               {{ uiStore.confirmDialog.options.cancelText || 'Cancel' }}
             </button>
             <button
               type="button"
-              class="w-full sm:w-auto px-10 py-3 text-white text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl active:scale-95"
+              :disabled="isConfirming"
+              class="w-full sm:w-auto px-10 py-3 text-white text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               :class="[
-                uiStore.confirmDialog.options.type === 'danger' 
-                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-100 dark:shadow-rose-950/40' 
+                uiStore.confirmDialog.options.type === 'danger'
+                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-100 dark:shadow-rose-950/40'
                   : uiStore.confirmDialog.options.type === 'warning'
                     ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-100 dark:shadow-amber-950/40'
                     : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100 dark:shadow-indigo-950/40'
               ]"
               @click="handleConfirm"
             >
-              {{ uiStore.confirmDialog.options.confirmText || 'Confirm' }}
+              <span
+                v-if="isConfirming"
+                class="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"
+              ></span>
+              {{ isConfirming ? 'Processing...' : (uiStore.confirmDialog.options.confirmText || 'Confirm') }}
             </button>
           </div>
         </div>

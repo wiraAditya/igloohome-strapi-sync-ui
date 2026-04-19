@@ -111,11 +111,12 @@ const handleTranslate = async () => {
 
   isTranslating.value = true;
   try {
-    const contentsToTranslate = enDetails.value.map((d) => d.content);
+    // Interleave title and content so both get translated: [title0, content0, title1, content1, ...]
+    const stringsToTranslate = enDetails.value.flatMap((d) => [d.title, d.content]);
 
     // Perform AI Translation
     const results = await gemini.translateAllLocales(
-      contentsToTranslate,
+      stringsToTranslate,
       selectedLocales.value,
       "igw-changelogs",
       (locale, status) => {
@@ -161,7 +162,9 @@ const handleSync = async () => {
 
           for (let i = 0; i < enDetails.value.length; i++) {
             const enDtl = enDetails.value[i];
-            const translatedContent = translatedContents[i];
+            // Translations are interleaved: even index = title, odd index = content
+            const translatedTitle = translatedContents[i * 2] ?? enDtl?.title ?? "";
+            const translatedContent = translatedContents[i * 2 + 1] ?? "";
 
             // 1. Check if localization already exists
             const checkQuery = `
@@ -191,14 +194,14 @@ const handleSync = async () => {
             );
 
             const payload = {
-              Title: enDtl?.title ?? "",
+              Title: translatedTitle,
               Changes: translatedContent,
               igw_changelog: changelogId,
               publishedAt: new Date().toISOString(),
             };
 
             if (existingLoc) {
-              await strapi.updateIgwChangelogDtl(existingLoc.id, payload);
+              await strapi.updateIgwChangelogDtl(existingLoc.id, payload, locale);
             } else {
               await strapi.submitIgwChangelogDtl(
                 enDtl?.id ?? "",
@@ -610,7 +613,8 @@ onMounted(() => {
           <div class="flex gap-3">
             <button
               @click="currentStep = 2"
-              class="px-6 py-3 bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-400 border border-gray-100 dark:border-slate-800 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-gray-50 transition-all"
+              :disabled="isSyncing"
+              class="px-6 py-3 bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-400 border border-gray-100 dark:border-slate-800 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-gray-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Add Locales
             </button>

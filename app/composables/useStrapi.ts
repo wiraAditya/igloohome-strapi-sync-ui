@@ -77,6 +77,19 @@ const GET_FAQS = `
   }
 `
 
+const GET_CHANGELOG_TAGS = `
+  query ChangelogTags {
+    changelogTags(publicationState: PREVIEW, pagination: { pageSize: 1000 }) {
+      data {
+        id
+        attributes {
+          Tags
+        }
+      }
+    }
+  }
+`
+
 const GET_IGW_CHANGELOGS = `
   query IgwChangelogs($pagination: PaginationArg, $filters: IgwChangelogFiltersInput) {
     igwChangelogs(
@@ -98,6 +111,11 @@ const GET_IGW_CHANGELOGS = `
                 Title
                 Changes
                 locale
+                changelog_tags(pagination: { pageSize: 100 }) {
+                  data {
+                    id
+                  }
+                }
               }
             }
           }
@@ -249,16 +267,16 @@ const SUBMIT_IGW_CHANGELOG_DTL = `
 `
 
 const UPDATE_IGW_CHANGELOG_DTL = `
-  mutation UpdateIgwChangelogDtl($id: ID!, $data: IgwChangelogDtlInput!) {
-    updateIgwChangelogDtl(id: $id, data: $data) {
+  mutation UpdateIgwChangelogDtl($id: ID!, $data: IgwChangelogDtlInput!, $locale: I18NLocaleCode) {
+    updateIgwChangelogDtl(id: $id, data: $data, locale: $locale) {
       data { id }
     }
   }
 `
 
 const CREATE_IGW_CHANGELOG_DTL = `
-  mutation CreateIgwChangelogDtl($data: IgwChangelogDtlInput!) {
-    createIgwChangelogDtl(data: $data) {
+  mutation CreateIgwChangelogDtl($data: IgwChangelogDtlInput!, $locale: I18NLocaleCode) {
+    createIgwChangelogDtl(data: $data, locale: $locale) {
       data { id }
     }
   }
@@ -424,13 +442,14 @@ export const useStrapi = () => {
 
       // Source entries for workflow must be 'en'
       const baseDtls = allDtls.filter((d) => (d.attributes.locale || 'en') === 'en')
-      
+
       baseDtls.forEach((dtl) => {
         dtls.push({
           id: dtl.id.toString(),
           title: dtl.attributes.Title,
           content: dtl.attributes.Changes,
-          parentId: id.toString()
+          parentId: id.toString(),
+          tagIds: (dtl.attributes.changelog_tags?.data || []).map((t: any) => t.id.toString())
         })
       })
     })
@@ -507,6 +526,14 @@ export const useStrapi = () => {
     }
   }
 
+  const getChangelogTags = async (): Promise<{ id: string; name: string }[]> => {
+    const data = await graphqlFetch<any>(GET_CHANGELOG_TAGS)
+    return (data.changelogTags?.data || []).map((t: any) => ({
+      id: t.id.toString(),
+      name: t.attributes.Tags
+    }))
+  }
+
   const getIgwChangelogDtls = async (parentId: string, locale: string): Promise<IgwChangelogDtlEntry[]> => {
     const query = `
       query IgwChangelogDtls($parentId: ID, $locale: String) {
@@ -521,6 +548,11 @@ export const useStrapi = () => {
                     Title
                     Changes
                     locale
+                    changelog_tags(pagination: { pageSize: 100 }) {
+                      data {
+                        id
+                      }
+                    }
                   }
                 }
               }
@@ -531,12 +563,13 @@ export const useStrapi = () => {
     `
     const data = await graphqlFetch<any>(query, { parentId, locale })
     const dtls = data.igwChangelog?.data?.attributes?.igw_changelog_dtls?.data || []
-    
+
     return dtls.map((d: any) => ({
       id: d.id.toString(),
       title: d.attributes.Title,
       content: d.attributes.Changes,
-      parentId: parentId
+      parentId: parentId,
+      tagIds: (d.attributes.changelog_tags?.data || []).map((t: any) => t.id.toString())
     })) as IgwChangelogDtlEntry[]
   }
 
@@ -718,13 +751,14 @@ export const useStrapi = () => {
     fetchCollection,
     getIgwChangelogs,
     getIgwChangelogDtls,
+    getChangelogTags,
     createIgwChangelog,
     updateIgwChangelog,
     deleteIgwChangelog,
     publishIgwChangelog,
     deleteIgwChangelogDtl: async (id: string) => graphqlFetch(DELETE_IGW_CHANGELOG_DTL, { id }),
-    createIgwChangelogDtl: async (data: any) => graphqlFetch(CREATE_IGW_CHANGELOG_DTL, { data }),
-    updateIgwChangelogDtl: async (id: string, data: any) => graphqlFetch(UPDATE_IGW_CHANGELOG_DTL, { id, data }),
+    createIgwChangelogDtl: async (data: any, locale?: string) => graphqlFetch(CREATE_IGW_CHANGELOG_DTL, { data, locale }),
+    updateIgwChangelogDtl: async (id: string, data: any, locale?: string) => graphqlFetch(UPDATE_IGW_CHANGELOG_DTL, { id, data, locale }),
     submitIgwChangelogDtl: async (id: string, locale: string, data: any) => graphqlFetch(SUBMIT_IGW_CHANGELOG_DTL, { id, locale, data }),
     extractTranslatableFields,
     mergeTranslations,

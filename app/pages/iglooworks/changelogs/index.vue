@@ -15,6 +15,8 @@ const ui = useUiStore();
 
 const searchQuery = ref("");
 const isFetching = ref(false);
+const isSaving = ref(false);
+const isDeleting = ref(false);
 const showCreateModal = ref(false);
 
 const EMPTY_CHANGELOG: IgwChangelogEntry & { details: any[] } = {
@@ -66,7 +68,6 @@ const handleCreate = () => {
 };
 
 const handleEdit = (parent: IgwChangelogEntry) => {
-  // Find all 'en' details for this parent
   const dtls = store.sourceEntries.filter((d) => d.parentId === parent.id);
   editingEntry.value = {
     ...parent,
@@ -74,6 +75,7 @@ const handleEdit = (parent: IgwChangelogEntry) => {
       id: (d as IgwChangelogDtlEntry).id,
       title: (d as IgwChangelogDtlEntry).title,
       content: (d as IgwChangelogDtlEntry).content,
+      tags: (d as IgwChangelogDtlEntry).tagIds ? [...((d as IgwChangelogDtlEntry).tagIds!)] : [],
     })),
   };
   showCreateModal.value = true;
@@ -82,9 +84,10 @@ const handleEdit = (parent: IgwChangelogEntry) => {
 const handleSave = async (formData: {
   version: string;
   releaseDate: string;
-  details: any[];
+  details: { id?: string; title: string; content: string; tags?: string[]; isNew?: boolean }[];
   locale: string;
 }) => {
+  isSaving.value = true;
   try {
     let parentId = editingEntry.value.id;
     const isEnglish = formData.locale === "en";
@@ -110,20 +113,22 @@ const handleSave = async (formData: {
 
     // Handle details (Update existing or create new)
     for (const dtl of formData.details) {
-      const payload = {
+      const payload: Record<string, any> = {
         Title: dtl.title,
         Changes: dtl.content,
         igw_changelog: parentId,
-        locale: formData.locale,
         publishedAt: new Date().toISOString(),
       };
 
+      // Tags are only written in EN mode to avoid locale-specific divergence
+      if (formData.locale === "en" && dtl.tags !== undefined) {
+        payload.changelog_tags = dtl.tags;
+      }
+
       if (dtl.id && !dtl.isNew) {
-        // Update existing entry (could be any locale)
-        await strapi.updateIgwChangelogDtl(dtl.id, payload);
+        await strapi.updateIgwChangelogDtl(dtl.id, payload, formData.locale);
       } else {
-        // Create new entry for this locale
-        await strapi.createIgwChangelogDtl(payload);
+        await strapi.createIgwChangelogDtl(payload, formData.locale);
       }
     }
 
@@ -137,6 +142,8 @@ const handleSave = async (formData: {
     await fetchAllData();
   } catch (e: any) {
     ui.addToast(`Operation failed: ${e.message}`, "error");
+  } finally {
+    isSaving.value = false;
   }
 };
 
@@ -148,12 +155,15 @@ const handleDelete = async (id: string) => {
     confirmText: "Delete",
     type: "danger",
     onConfirm: async () => {
+      isDeleting.value = true;
       try {
         await strapi.deleteIgwChangelog(id);
         ui.addToast("Changelog deleted successfully", "success");
         await fetchAllData();
       } catch (e: any) {
         ui.addToast(`Delete failed: ${e.message}`, "error");
+      } finally {
+        isDeleting.value = false;
       }
     },
   });
@@ -376,12 +386,9 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
                 <td class="px-6 py-5 whitespace-nowrap text-right">
                   <div class="flex items-center justify-end gap-2">
                     <button
-                      @click="
-                        navigateTo(
-                          `/iglooworks/changelogs/translate/${parent.id}`,
-                        )
-                      "
-                      class="p-2 transition-all rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                      @click="navigateTo(`/iglooworks/changelogs/translate/${parent.id}`)"
+                      :disabled="isDeleting"
+                      class="p-2 transition-all rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Prepare Translation"
                     >
                       <svg
@@ -406,7 +413,8 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
                     </button>
                     <button
                       @click="handleEdit(parent)"
-                      class="p-2 text-gray-400 hover:text-indigo-500 hover:bg-gray-50 dark:hover:bg-slate-900 rounded-lg transition-all"
+                      :disabled="isDeleting"
+                      class="p-2 text-gray-400 hover:text-indigo-500 hover:bg-gray-50 dark:hover:bg-slate-900 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                       title="View"
                     >
                       <svg
@@ -428,7 +436,8 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
                     </button>
                     <button
                       @click="handlePublish(parent)"
-                      class="p-2 transition-all rounded-lg"
+                      :disabled="isDeleting"
+                      class="p-2 transition-all rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
                       :class="
                         parent.publishedAt
                           ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30'
@@ -469,7 +478,8 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
                     </button>
                     <button
                       @click="handleEdit(parent)"
-                      class="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
+                      :disabled="isDeleting"
+                      class="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Edit"
                     >
                       <svg
@@ -491,7 +501,8 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
                     </button>
                     <button
                       @click="handleDelete(parent.id)"
-                      class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-all"
+                      :disabled="isDeleting"
+                      class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Delete"
                     >
                       <svg
@@ -528,7 +539,7 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
     >
       <div
         class="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-        @click="showCreateModal = false"
+        @click="!isSaving && (showCreateModal = false)"
       ></div>
       <div
         class="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden"
@@ -548,8 +559,9 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
             </p>
           </div>
           <button
-            @click="showCreateModal = false"
-            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
+            @click="!isSaving && (showCreateModal = false)"
+            :disabled="isSaving"
+            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -574,8 +586,9 @@ const handlePublish = async (parent: IgwChangelogEntry) => {
             <IgwChangelogForm
               :initial-data="editingEntry"
               :is-editing="!!editingEntry.id"
+              :is-saving="isSaving"
               @save="handleSave"
-              @cancel="showCreateModal = false"
+              @cancel="!isSaving && (showCreateModal = false)"
             />
           </div>
         </div>

@@ -35,33 +35,13 @@ const activeLocaleName = computed(
     activeLocale.value,
 );
 
-/**
- * Updates a specific translation entry for the active locale.
- * Ensures the locale array exists before assignment to prevent runtime errors and
- * provides TypeScript narrowing via a local reference.
- *
- * @param index - The index of the source entry being translated
- * @param value - The new translated string value
- */
-const updateTranslation = (index: number, value: string): void => {
+const updateField = (flatIndex: number, value: string): void => {
   const currentTranslations = translations.value;
   const locale = activeLocale.value;
-
-  // Tiger-Style Defensive Check: Ensure model and locale are valid
-  if (!currentTranslations || !locale) {
-    return;
-  }
-
-  // Ensure the locale entry exists in the record
-  if (!currentTranslations[locale]) {
-    currentTranslations[locale] = [];
-  }
-
-  // Stable reference for TypeScript narrowing and reactivity safety
+  if (!currentTranslations || !locale) return;
+  if (!currentTranslations[locale]) currentTranslations[locale] = [];
   const localeArray = currentTranslations[locale];
-  if (Array.isArray(localeArray)) {
-    localeArray[index] = value;
-  }
+  if (Array.isArray(localeArray)) localeArray[flatIndex] = value;
 };
 
 // Navigation for locales
@@ -118,45 +98,66 @@ const setLocale = (locale: LocaleCode) => {
         </div>
 
         <!-- Content Grid -->
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-slate-800"
-        >
-          <!-- English Source -->
-          <div class="p-6 space-y-3">
-            <div class="flex items-center justify-between">
+        <div class="divide-y divide-gray-100 dark:divide-slate-800">
+          <!-- Title Row -->
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-slate-800"
+          >
+            <div class="p-6 space-y-2">
               <label
                 class="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest"
-                >English Source</label
+                >EN Title</label
               >
+              <div
+                class="px-4 py-3 bg-gray-50/30 dark:bg-slate-900/10 border border-dashed border-gray-200 dark:border-slate-800 rounded-xl text-sm font-bold text-gray-700 dark:text-slate-300"
+              >
+                {{ source.title }}
+              </div>
             </div>
-            <div
-              class="prose prose-sm dark:prose-invert max-w-none bg-gray-50/30 dark:bg-slate-900/10 p-4 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 min-h-30 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-300"
-            >
-              {{ source.content }}
-            </div>
-          </div>
-
-          <!-- AI Translation / Editor -->
-          <div class="p-6 space-y-3 bg-indigo-50/5 dark:bg-indigo-500/5">
-            <div class="flex items-center justify-between">
+            <div class="p-6 space-y-2 bg-indigo-50/5 dark:bg-indigo-500/5">
               <label
                 class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest"
               >
-                {{ activeLocaleName }} Translation
+                {{ activeLocaleName }} Title
               </label>
+              <input
+                type="text"
+                :value="translations?.[activeLocale]?.[index * 2] ?? ''"
+                @input="(e: Event) => updateField(index * 2, (e.target as HTMLInputElement).value)"
+                class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none shadow-inner"
+                placeholder="Waiting for AI translation..."
+              />
             </div>
-            <textarea
-              :value="translations?.[activeLocale]?.[index] ?? ''"
-              @input="
-                (e: Event) =>
-                  updateTranslation(
-                    index,
-                    (e.target as HTMLTextAreaElement).value,
-                  )
-              "
-              class="w-full min-h-40 p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-y shadow-inner scrollbar-thin"
-              placeholder="Waiting for AI translation..."
-            ></textarea>
+          </div>
+
+          <!-- Changes Row -->
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-slate-800"
+          >
+            <div class="p-6 space-y-2">
+              <label
+                class="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest"
+                >EN Changes</label
+              >
+              <div
+                class="prose prose-sm dark:prose-invert max-w-none bg-gray-50/30 dark:bg-slate-900/10 p-4 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 min-h-30 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-300"
+              >
+                {{ source.content }}
+              </div>
+            </div>
+            <div class="p-6 space-y-2 bg-indigo-50/5 dark:bg-indigo-500/5">
+              <label
+                class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest"
+              >
+                {{ activeLocaleName }} Changes
+              </label>
+              <textarea
+                :value="translations?.[activeLocale]?.[index * 2 + 1] ?? ''"
+                @input="(e: Event) => updateField(index * 2 + 1, (e.target as HTMLTextAreaElement).value)"
+                class="w-full min-h-40 p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-y shadow-inner scrollbar-thin"
+                placeholder="Waiting for AI translation..."
+              ></textarea>
+            </div>
           </div>
         </div>
       </div>
