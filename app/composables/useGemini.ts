@@ -37,6 +37,7 @@ export const useGemini = () => {
     values: string[],
     targetLocale: string,
     contentType: ContentType,
+    keepTerms: string[] = [],
     onProgress?: (done: number, total: number) => void,
   ): Promise<string[]> => {
     const BATCH_SIZE = 200;
@@ -48,6 +49,7 @@ export const useGemini = () => {
         batch,
         targetLocale,
         contentType,
+        keepTerms,
       );
       results.push(...translatedBatch);
 
@@ -63,9 +65,14 @@ export const useGemini = () => {
     batch: string[],
     targetLocale: string,
     contentType: ContentType,
+    keepTerms: string[] = [],
     isRetry = false,
   ): Promise<string[]> => {
     const languageName = localeMap[targetLocale] || targetLocale;
+    const keepTermsRule =
+      keepTerms.length > 0
+        ? `\n- Do NOT translate these terms; keep each one exactly as written in the source (no transliteration, no case changes), even mid-sentence: ${keepTerms.join(", ")}`
+        : "";
     const prompt = `
 You are native speaker of the language ${languageName}, you will need to translate from english.
 Translate the following JSON array of strings from English to ${languageName} (${targetLocale}).
@@ -81,7 +88,7 @@ Rules:
 - Preserve capitalisation style (ALL CAPS stays ALL CAPS, Title Case stays Title Case).
 - For categories: translate short UI labels concisely.
 - For changelogs: translate product update prose naturally; preserve version numbers, app version strings, and product names exactly.
-- For faqs: translate question-and-answer pairs clearly; keep the question mark.
+- For faqs: translate question-and-answer pairs clearly; keep the question mark.${keepTermsRule}
 
 Input JSON array:
 ${JSON.stringify(batch)}
@@ -129,7 +136,13 @@ ${JSON.stringify(batch)}
 
       if (!isRetry) {
         console.warn("Translation failed, retrying once...");
-        return translateBatchWithRetry(batch, targetLocale, contentType, true);
+        return translateBatchWithRetry(
+          batch,
+          targetLocale,
+          contentType,
+          keepTerms,
+          true,
+        );
       }
 
       throw new Error(
@@ -142,6 +155,7 @@ ${JSON.stringify(batch)}
     values: string[],
     targetLocales: string[],
     contentType: ContentType,
+    keepTerms: string[] = [],
     onLocaleProgress?: (
       locale: string,
       status: "running" | "done" | "error",
@@ -160,6 +174,7 @@ ${JSON.stringify(batch)}
             values,
             locale,
             contentType,
+            keepTerms,
           );
           results[locale] = translated;
 

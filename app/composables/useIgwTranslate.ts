@@ -64,8 +64,9 @@ export const useIgwTranslate = () => {
    * This is intended for use in non-interactive contexts (e.g. workspace view).
    */
   const prepareAndSyncTranslations = async (
-    parentId: string, 
+    parentId: string,
     targetLocales: LocaleCode[],
+    keepTerms: string[] = [],
     onProgress?: (locale: string, status: 'translating' | 'syncing' | 'done' | 'error', message?: string) => void
   ): Promise<void> => {
     try {
@@ -85,6 +86,7 @@ export const useIgwTranslate = () => {
         contentsToTranslate,
         targetLocales,
         'igw-changelogs',
+        keepTerms,
         (locale, status, _data, error) => {
           if (status === 'running') {
             onProgress?.(locale, 'translating')

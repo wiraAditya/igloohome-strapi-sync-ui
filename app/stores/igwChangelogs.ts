@@ -24,6 +24,7 @@ export const useIgwChangelogsStore = defineStore('igw-changelogs', () => {
   // Active translation session state
   const activeSelectedLocales = ref<LocaleCode[]>([])
   const activeTranslations = ref<Record<string, string[]>>({})
+  const activeKeepTerms = ref<string[]>([])
   
   const localeSource = ref<Record<string, TranslationSource>>({})
   const localeJobStatus = ref<Record<string, LocaleJobStatus>>({})
@@ -101,11 +102,13 @@ export const useIgwChangelogsStore = defineStore('igw-changelogs', () => {
     syncedLocales.value = {}
     activeSelectedLocales.value = []
     activeTranslations.value = {}
+    activeKeepTerms.value = []
   }
 
   function resetActiveSession() {
     activeSelectedLocales.value = []
     activeTranslations.value = {}
+    activeKeepTerms.value = []
   }
 
   return {
@@ -119,6 +122,7 @@ export const useIgwChangelogsStore = defineStore('igw-changelogs', () => {
     syncedLocales,
     activeSelectedLocales,
     activeTranslations,
+    activeKeepTerms,
     entriesWithMetadata,
     setSource,
     setLocaleEntries,

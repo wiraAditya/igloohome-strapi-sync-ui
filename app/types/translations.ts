@@ -58,6 +58,21 @@ export interface FaqEntry extends BaseStrapiEntry {
   content: string
 }
 
+export interface FaqLocalization {
+  id: string
+  locale: string
+  title: string
+  content: string
+  publishedAt?: string | null
+}
+
+export interface FaqListEntry extends FaqEntry {
+  categoryName?: string
+  publishedAt?: string | null
+  locales: string[]
+  localizations?: FaqLocalization[]
+}
+
 /**
  * IGW Changelog Parent (Metadata)
  */

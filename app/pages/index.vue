@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const categoriesStore = useCategoriesStore()
 const changelogsStore = useChangelogsStore()
-const faqsStore = useFaqsStore()
 
 const contentTypes = [
   {
@@ -26,7 +25,7 @@ const contentTypes = [
     id: 'faqs',
     name: 'FAQs',
     description: 'Help center and frequently asked questions',
-    store: faqsStore,
+    store: null,
     path: '/faqs',
     icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 1 1-18 0 9 9 0 0118 0z',
     color: 'indigo'
@@ -84,7 +83,7 @@ const getLocaleCount = (store: any) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" :d="type.icon" />
                   </svg>
                 </div>
-                <div class="flex flex-col items-end">
+                <div v-if="type.store" class="flex flex-col items-end">
                    <SharedStatusBadge
                     :status="type.store.isPulled ? 'success' : 'warning'"
                     :text="type.store.isPulled ? 'Ready' : 'Pending'"
@@ -99,7 +98,7 @@ const getLocaleCount = (store: any) => {
               </p>
             </div>
 
-            <div class="mt-8 grid grid-cols-2 gap-4 border-t border-gray-50 dark:border-slate-800 pt-6">
+            <div v-if="type.store" class="mt-8 grid grid-cols-2 gap-4 border-t border-gray-50 dark:border-slate-800 pt-6">
               <div class="space-y-1">
                 <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">Target Locales</span>
                 <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getLocaleCount(type.store) }}</p>

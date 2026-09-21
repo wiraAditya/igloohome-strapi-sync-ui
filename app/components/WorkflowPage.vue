@@ -18,6 +18,15 @@ const selectedLocales = ref<LocaleCode[]>([]);
 const isPulling = ref(false);
 const pullUnpublishedOnly = ref(false);
 
+// Comma-separated terms the user never wants translated (e.g. "keypad backlight, auto-relock")
+const keepTermsInput = ref("");
+const keepTerms = computed(() =>
+  keepTermsInput.value
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean),
+);
+
 const locales = SUPPORTED_LOCALES;
 const showUploadModal = ref(false);
 const showSyncModal = ref(false);
@@ -80,7 +89,7 @@ const handleTranslate = async () => {
 
   isTranslating.value = true;
   try {
-    await aiTranslate(selectedLocales.value);
+    await aiTranslate(selectedLocales.value, keepTerms.value);
     ui.addToast("AI Translation completed", "success");
   } catch (e: any) {
     ui.addToast(`Translation failed: ${e.message}`, "error");
@@ -92,7 +101,7 @@ const handleTranslate = async () => {
 const handleRetry = async (locale: string) => {
   isTranslating.value = true;
   try {
-    await aiTranslate([locale as LocaleCode]);
+    await aiTranslate([locale as LocaleCode], keepTerms.value);
     ui.addToast(`Retry for ${locale} completed`, "success");
   } catch (e: any) {
     ui.addToast(`Retry for ${locale} failed: ${e.message}`, "error");
@@ -503,6 +512,27 @@ const hasLocaleData = computed(
                 </button>
               </div>
             </div>
+          </div>
+
+          <!-- Do Not Translate -->
+          <div class="space-y-3 pt-6 border-t border-gray-50 dark:border-slate-800">
+            <label
+              class="block text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest"
+            >
+              Do Not Translate
+            </label>
+            <p class="text-xs font-medium text-gray-500 dark:text-slate-400">
+              Comma-separated terms that should stay exactly as written in
+              every language (e.g.
+              <span class="italic">keypad backlight, auto-relock</span>).
+            </p>
+            <input
+              v-model="keepTermsInput"
+              :disabled="isTranslating"
+              type="text"
+              placeholder="keypad backlight, auto-relock"
+              class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+            />
           </div>
 
           <!-- Progress and Status -->

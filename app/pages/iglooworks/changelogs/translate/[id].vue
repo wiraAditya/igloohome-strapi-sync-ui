@@ -39,6 +39,17 @@ const translations = computed({
   set: (val) => (store.activeTranslations = val),
 });
 
+// Comma-separated terms the user never wants translated (e.g. "keypad backlight, auto-relock")
+const keepTermsInput = computed({
+  get: () => store.activeKeepTerms.join(", "),
+  set: (val: string) => {
+    store.activeKeepTerms = val
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+  },
+});
+
 // Computed for the current entry (find from store)
 const entry = computed<IgwChangelogEntry | undefined>(() =>
   store.parentEntries.find((p) => p.id === changelogId),
@@ -119,6 +130,7 @@ const handleTranslate = async () => {
       stringsToTranslate,
       selectedLocales.value,
       "igw-changelogs",
+      store.activeKeepTerms,
       (locale, status) => {
         if (status === "done") {
           ui.addToast(
@@ -496,6 +508,28 @@ onMounted(() => {
           >
             Back
           </button>
+        </div>
+
+        <div
+          class="bg-white dark:bg-slate-950/20 border border-gray-100 dark:border-slate-800 rounded-3xl p-8 space-y-4 shadow-sm"
+        >
+          <label
+            class="block text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest"
+          >
+            Do Not Translate
+          </label>
+          <p class="text-sm font-medium text-gray-500 dark:text-slate-400">
+            Comma-separated terms that should stay exactly as written in every
+            language (e.g. product/feature names like
+            <span class="italic">keypad backlight, auto-relock</span>).
+          </p>
+          <input
+            v-model="keepTermsInput"
+            :disabled="isTranslating"
+            type="text"
+            placeholder="keypad backlight, auto-relock"
+            class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+          />
         </div>
 
         <div

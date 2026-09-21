@@ -3,20 +3,17 @@ import { useStrapi } from '~/composables/useStrapi'
 import { useGemini } from '~/composables/useGemini'
 import { useCategoriesStore } from '~/stores/categories'
 import { useChangelogsStore } from '~/stores/changelogs'
-import { useFaqsStore } from '~/stores/faqs'
 
 export const useContentType = (type: ContentType) => {
   const strapi = useStrapi()
   const gemini = useGemini()
-  
+
   // These stores are implemented in app/stores/
   // Nuxt auto-imports make them available, but explicit imports are used for clarity.
   const store = type === 'categories'
     ? useCategoriesStore()
     : type === 'changelogs'
     ? useChangelogsStore()
-    : type === 'faqs'
-    ? useFaqsStore()
     : (() => { throw new Error(`Unsupported content type for generic workflow: ${type}`) })()
 
   /**
@@ -30,16 +27,17 @@ export const useContentType = (type: ContentType) => {
   /**
    * Extract translatable strings, send to Gemini, and merge results back.
    */
-  const aiTranslate = async (locales: string[]) => {
+  const aiTranslate = async (locales: string[], keepTerms: string[] = []) => {
     const values = strapi.extractTranslatableFields(type, store.sourceEntries)
-    
+
     store.setProgress(0, locales.length)
     let completed = 0
-    
+
     await gemini.translateAllLocales(
-      values, 
-      locales, 
-      type, 
+      values,
+      locales,
+      type,
+      keepTerms,
       (locale: string, status: "running" | "done" | "error", data?: string[]) => {
         store.setLocaleJobStatus(locale as LocaleCode, status as any)
         
